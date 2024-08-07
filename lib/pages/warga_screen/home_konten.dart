@@ -38,9 +38,9 @@ class HomeKonten extends StatelessWidget {
                     padding:
                         const EdgeInsets.only(left: 21, top: 30, bottom: 30),
                     child: Image.asset(
-                      'assets/icons/logo.png',
-                      width: 72,
-                      height: 74,
+                      'assets/images/logo.png',
+                      width: 90,
+                      height: 80,
                     ),
                   ),
                   const Expanded(
@@ -134,7 +134,10 @@ class HomeKonten extends StatelessWidget {
                               const Padding(
                                 padding: EdgeInsets.only(left: 7),
                               ),
-                              Image.asset("assets/images/sampah terpilah.png"),
+                              Image.asset(
+                                "assets/images/sampah.png",
+                                height: 70,
+                              ),
                               const SizedBox(width: 10),
                               const Text(
                                 "Sampah\nTerpilah",
@@ -172,7 +175,10 @@ class HomeKonten extends StatelessWidget {
                               const Padding(
                                 padding: EdgeInsets.only(left: 7),
                               ),
-                              Image.asset("assets/images/sampah liar.png"),
+                              Image.asset(
+                                "assets/images/sampahliar.png",
+                                height: 80,
+                              ),
                               const SizedBox(width: 10),
                               const Text(
                                 "Sampah\nLiar",

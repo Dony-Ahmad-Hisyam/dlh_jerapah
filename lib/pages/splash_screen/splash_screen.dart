@@ -1,4 +1,6 @@
+import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:dlh_project/constant/color.dart';
+import 'package:dlh_project/pages/warga_screen/home.dart';
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatelessWidget {
@@ -6,8 +8,8 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Stack(
+    return AnimatedSplashScreen(
+      splash: Stack(
         children: [
           // Background color
           Container(
@@ -36,6 +38,14 @@ class SplashScreen extends StatelessWidget {
           ),
         ],
       ),
+      nextScreen: const HomePage(),
+      splashIconSize:
+          double.infinity, // Ukuran splash screen agar sesuai dengan layar
+      backgroundColor: Colors
+          .transparent, // Latar belakang transparan agar latar belakang dari splash ditampilkan
+      splashTransition:
+          SplashTransition.fadeTransition, // Transisi splash screen
+      duration: 3000, // Durasi splash screen dalam milidetik
     );
   }
 }
