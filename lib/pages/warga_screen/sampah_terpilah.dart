@@ -10,6 +10,7 @@ class SampahTerpilah extends StatefulWidget {
   const SampahTerpilah({Key? key}) : super(key: key);
 
   @override
+  // ignore: library_private_types_in_public_api
   _SampahTerpilahState createState() => _SampahTerpilahState();
 }
 
@@ -143,7 +144,7 @@ class _SampahTerpilahState extends State<SampahTerpilah> {
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: purple,
+                color: green,
                 borderRadius: BorderRadius.circular(10),
               ),
               padding: const EdgeInsets.all(10.0),
@@ -167,43 +168,18 @@ class _SampahTerpilahState extends State<SampahTerpilah> {
                           'assets/images/sampah.png',
                           height: 100,
                         ),
-                        const SizedBox(width: 50),
-                        Expanded(
+                        const SizedBox(width: 5),
+                        const Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              RichText(
-                                text: const TextSpan(
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                  ),
-                                  children: <TextSpan>[
-                                    TextSpan(
-                                      text: 'Organik:\n',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text:
-                                          'kulit buah, sayuran, sisa makanan, dedaunan.\n\n',
-                                    ),
-                                    TextSpan(
-                                      text: 'Anorganik:\n',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                    TextSpan(
-                                      text:
-                                          'Botol plastik, Koran, majalah, kardus dll.',
-                                    ),
-                                  ],
-                                ),
-                                softWrap: true,
-                                overflow: TextOverflow.visible,
-                              ),
+                              Text(
+                                "Sampah terpilah adalah sampah yang dipisahkan berdasarkan jenis sebelum dibuang atau didaur ulang, memudahkan pengelolaan dan mengurangi dampak lingkungan.",
+                                style: TextStyle(
+                                    color: white,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold),
+                              )
                             ],
                           ),
                         ),
@@ -320,6 +296,7 @@ class _SampahTerpilahState extends State<SampahTerpilah> {
               ),
             ),
             BottomAppBar(
+              color: Colors.transparent,
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(

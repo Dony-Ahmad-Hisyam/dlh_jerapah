@@ -1,6 +1,7 @@
 import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:dlh_project/constant/color.dart';
-import 'package:dlh_project/pages/warga_screen/home.dart';
+import 'package:dlh_project/pages/form_opening/daftar.dart';
+import 'package:dlh_project/pages/form_opening/login.dart';
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatelessWidget {
@@ -38,14 +39,11 @@ class SplashScreen extends StatelessWidget {
           ),
         ],
       ),
-      nextScreen: const HomePage(),
-      splashIconSize:
-          double.infinity, // Ukuran splash screen agar sesuai dengan layar
-      backgroundColor: Colors
-          .transparent, // Latar belakang transparan agar latar belakang dari splash ditampilkan
-      splashTransition:
-          SplashTransition.fadeTransition, // Transisi splash screen
-      duration: 3000, // Durasi splash screen dalam milidetik
+      nextScreen: const Login(),
+      splashIconSize: double.infinity,
+      backgroundColor: Colors.transparent,
+      splashTransition: SplashTransition.fadeTransition,
+      duration: 3000,
     );
   }
 }

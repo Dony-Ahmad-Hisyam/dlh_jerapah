@@ -1,11 +1,16 @@
+import 'dart:ffi';
+
+import 'package:flutter/material.dart';
 import 'package:dlh_project/pages/warga_screen/Berita.dart';
 import 'package:dlh_project/pages/warga_screen/sampah_liar.dart';
 import 'package:dlh_project/pages/warga_screen/sampah_terpilah.dart';
-import 'package:flutter/material.dart';
 import 'package:dlh_project/constant/color.dart';
 
 class HomeKonten extends StatelessWidget {
-  const HomeKonten({super.key});
+  final String userName;
+  final int userId;
+
+  const HomeKonten({super.key, required this.userName, required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -13,17 +18,50 @@ class HomeKonten extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.only(top: 27, left: 20),
-            alignment: Alignment.centerLeft,
-            child: const Text(
-              "Selamat Datang!",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: Colors.black,
-              ),
+            padding: const EdgeInsets.only(top: 27, left: 20, right: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Selamat Datang, $userName!",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: green,
+                    borderRadius: BorderRadius.circular(8.0), // Rounded corners
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 6.0,
+                        offset: Offset(2, 2),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(
+                      8.0), // Increased padding for better spacing
+                  child: Center(
+                    // Center the text inside the container
+                    child: Text(
+                      "$userId",
+                      style: const TextStyle(
+                        fontSize: 18, // Slightly larger font size
+                        fontWeight:
+                            FontWeight.w600, // Slightly bolder font weight
+                        color: Colors
+                            .black87, // Darker color for better readability
+                      ),
+                    ),
+                  ),
+                )
+              ],
             ),
           ),
+
           Padding(
             padding: const EdgeInsets.only(left: 10, right: 10, top: 13),
             child: Container(

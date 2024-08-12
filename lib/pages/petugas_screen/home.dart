@@ -1,53 +1,38 @@
-import 'dart:ffi';
-
 import 'package:dlh_project/constant/color.dart';
+import 'package:dlh_project/pages/petugas_screen/Home_Konten.dart';
+import 'package:dlh_project/pages/petugas_screen/akun_petugas.dart';
+import 'package:dlh_project/pages/warga_screen/berita.dart';
+import 'package:dlh_project/pages/warga_screen/akun.dart';
+import 'package:dlh_project/pages/warga_screen/history.dart';
+import 'package:dlh_project/pages/warga_screen/home_konten.dart';
+import 'package:dlh_project/pages/warga_screen/uptd.dart';
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'home_konten.dart'; // Pastikan path ini benar
-import 'berita.dart'; // Import halaman lain yang digunakan
-import 'akun.dart';
-import 'history.dart';
-import 'uptd.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class HomePetugasPage extends StatefulWidget {
+  const HomePetugasPage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
+  State<HomePetugasPage> createState() => _HomePetugasPageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePetugasPageState extends State<HomePetugasPage> {
   int _selectedIndex = 0;
-  String? userName;
-  int? userId;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadUserData();
-  }
+  final List<Widget> _pages = const [
+    HomeKontenPetugas(),
+    History(),
+    Uptd(),
+    AkunPetugas(),
+  ];
 
-  Future<void> _loadUserData() async {
-    final prefs = await SharedPreferences.getInstance();
+  void _onItemTapped(int index) {
     setState(() {
-      userName = prefs.getString('user_name') ?? 'Guest';
-      userId = prefs.getInt('user_id') ?? 0;
+      _selectedIndex = index;
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> _pages = [
-      HomeKonten(
-        userName: userName ?? 'ge',
-        userId: userId ?? 0,
-      ),
-      const History(),
-      const Berita(),
-      const Uptd(),
-      const Akun(),
-    ];
-
     return Scaffold(
       body: SafeArea(
         child: _pages[_selectedIndex],
@@ -61,10 +46,6 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.history),
             label: 'Riwayat',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.newspaper),
-            label: 'Berita',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.location_on_rounded),
@@ -85,11 +66,5 @@ class _HomePageState extends State<HomePage> {
         type: BottomNavigationBarType.fixed,
       ),
     );
-  }
-
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
   }
 }
