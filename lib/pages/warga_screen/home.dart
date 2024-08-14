@@ -20,6 +20,7 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   String? userName;
   int? userId;
+  bool _isLoggedIn = false;
 
   @override
   void initState() {
@@ -32,6 +33,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       userName = prefs.getString('user_name') ?? 'Guest';
       userId = prefs.getInt('user_id') ?? 0;
+      _isLoggedIn = userName != 'Guest';
     });
   }
 
@@ -39,13 +41,38 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final List<Widget> _pages = [
       HomeKonten(
-        userName: userName ?? 'ge',
+        userName: userName ?? 'Guest',
         userId: userId ?? 0,
       ),
-      const History(),
+      if (_isLoggedIn) const History(),
       const Berita(),
       const Uptd(),
       const Akun(),
+    ];
+
+    final List<BottomNavigationBarItem> _bottomNavigationBarItems = [
+      const BottomNavigationBarItem(
+        icon: Icon(Icons.home),
+        label: 'Home',
+      ),
+      if (_isLoggedIn)
+        const BottomNavigationBarItem(
+          // Tampilkan Riwayat jika login
+          icon: Icon(Icons.history),
+          label: 'Riwayat',
+        ),
+      const BottomNavigationBarItem(
+        icon: Icon(Icons.newspaper),
+        label: 'Berita',
+      ),
+      const BottomNavigationBarItem(
+        icon: Icon(Icons.location_on_rounded),
+        label: 'UPTD/TPS',
+      ),
+      const BottomNavigationBarItem(
+        icon: Icon(Icons.person),
+        label: 'Akun',
+      ),
     ];
 
     return Scaffold(
@@ -53,30 +80,9 @@ class _HomePageState extends State<HomePage> {
         child: _pages[_selectedIndex],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Home',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'Riwayat',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.newspaper),
-            label: 'Berita',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.location_on_rounded),
-            label: 'UPTD/TPS',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Akun',
-          ),
-        ],
+        items: _bottomNavigationBarItems,
         currentIndex: _selectedIndex,
-        selectedItemColor: purple,
+        selectedItemColor: BlurStyle,
         unselectedItemColor: grey,
         onTap: _onItemTapped,
         showUnselectedLabels: true,

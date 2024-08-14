@@ -1,10 +1,11 @@
 import "package:flutter/material.dart";
 
-const purple = Color(0xFF7F3DFF);
+// ignore: constant_identifier_names
+const BlurStyle = Color.fromARGB(255, 57, 87, 254);
 const softPurple = Color(0xFFEEE5FF);
 const white = Color(0xFFFFFFFF);
-const green = Color(0xFF00A86B);
-const red = Color(0xFFFD3C4A);
+const green = Colors.green;
+const red = Colors.red;
 const grey = Color(0xFF999999);
 const softGrey = Color(0xFFD9D9D9);
 const black = Color(0xFF0D0E0F);

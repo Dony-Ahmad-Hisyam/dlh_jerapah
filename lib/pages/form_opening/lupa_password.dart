@@ -1,16 +1,50 @@
-import 'package:dlh_project/constant/color.dart';
+import 'package:dlh_project/pages/form_opening/Verifikasi_Otp.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class LupaPassword extends StatefulWidget {
   const LupaPassword({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _LupaPasswordState createState() => _LupaPasswordState();
 }
 
 class _LupaPasswordState extends State<LupaPassword> {
-  bool _obscurePassword = true;
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController noHpController = TextEditingController();
+
+  Future<void> resetPassword() async {
+    final response = await http.post(
+      Uri.parse('https://jera.kerissumenep.com/api/password/forgot'),
+      body: {
+        'email': emailController.text,
+        'no_hp': noHpController.text,
+      },
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      if (data['success']) {
+        // Navigasi ke halaman OTP
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => VerifikasiOtp(),
+          ),
+        );
+      } else {
+        // Tampilkan pesan kesalahan
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['message'])),
+        );
+      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Terjadi kesalahan, coba lagi.')),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,7 +53,7 @@ class _LupaPasswordState extends State<LupaPassword> {
         automaticallyImplyLeading: false,
         centerTitle: true,
         title: const Text(
-          'Reset Password',
+          'Lupa Password',
           textAlign: TextAlign.center,
         ),
       ),
@@ -29,48 +63,33 @@ class _LupaPasswordState extends State<LupaPassword> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const SizedBox(
-                height: 40,
-              ),
-              const TextField(
-                decoration: InputDecoration(
+              const SizedBox(height: 40),
+              TextField(
+                controller: emailController,
+                decoration: const InputDecoration(
                   labelText: 'Email',
                   border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16.0),
               TextField(
-                obscureText: _obscurePassword,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  border: const OutlineInputBorder(),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility
-                          : Icons.visibility_off,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
-                  ),
+                controller: noHpController,
+                decoration: const InputDecoration(
+                  labelText: 'Nomor HP',
+                  border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 24.0),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Handle LupaPassword logic here
-                  },
+                  onPressed: resetPassword,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: purple,
+                    backgroundColor: Colors.blue,
                   ),
                   child: const Text(
                     'Reset Password',
-                    style: TextStyle(color: white),
+                    style: TextStyle(color: Colors.white),
                   ),
                 ),
               ),

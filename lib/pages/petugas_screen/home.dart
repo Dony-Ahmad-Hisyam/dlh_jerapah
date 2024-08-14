@@ -57,7 +57,7 @@ class _HomePetugasPageState extends State<HomePetugasPage> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: purple,
+        selectedItemColor: BlurStyle,
         unselectedItemColor: grey,
         onTap: _onItemTapped,
         showUnselectedLabels: true,

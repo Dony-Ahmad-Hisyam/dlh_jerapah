@@ -1,5 +1,4 @@
-import 'dart:ffi';
-
+import 'package:dlh_project/pages/form_opening/login.dart';
 import 'package:flutter/material.dart';
 import 'package:dlh_project/pages/warga_screen/Berita.dart';
 import 'package:dlh_project/pages/warga_screen/sampah_liar.dart';
@@ -33,7 +32,7 @@ class HomeKonten extends StatelessWidget {
                 Container(
                   decoration: BoxDecoration(
                     color: green,
-                    borderRadius: BorderRadius.circular(8.0), // Rounded corners
+                    borderRadius: BorderRadius.circular(8.0),
                     boxShadow: const [
                       BoxShadow(
                         color: Colors.black26,
@@ -42,18 +41,14 @@ class HomeKonten extends StatelessWidget {
                       ),
                     ],
                   ),
-                  padding: const EdgeInsets.all(
-                      8.0), // Increased padding for better spacing
+                  padding: const EdgeInsets.all(8.0),
                   child: Center(
-                    // Center the text inside the container
                     child: Text(
                       "$userId",
                       style: const TextStyle(
-                        fontSize: 18, // Slightly larger font size
-                        fontWeight:
-                            FontWeight.w600, // Slightly bolder font weight
-                        color: Colors
-                            .black87, // Darker color for better readability
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
                       ),
                     ),
                   ),
@@ -61,13 +56,12 @@ class HomeKonten extends StatelessWidget {
               ],
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.only(left: 10, right: 10, top: 13),
             child: Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: purple,
+                color: BlurStyle,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
@@ -112,10 +106,7 @@ class HomeKonten extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(
-            height: 15,
-          ),
-          // foto Instansi
+          const SizedBox(height: 15),
           Container(
             padding: const EdgeInsets.only(left: 10, right: 10),
             height: 174,
@@ -130,9 +121,7 @@ class HomeKonten extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(
-            height: 10,
-          ),
+          const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.all(10),
             child: Column(
@@ -153,12 +142,16 @@ class HomeKonten extends StatelessWidget {
                     Expanded(
                       child: GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const SampahTerpilah(),
-                            ),
-                          );
+                          if (userName == 'Guest') {
+                            _showLoginRequiredDialog(context);
+                          } else {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const SampahTerpilah(),
+                              ),
+                            );
+                          }
                         },
                         child: Container(
                           height: 80,
@@ -176,7 +169,7 @@ class HomeKonten extends StatelessWidget {
                                 "assets/images/sampah.png",
                                 height: 70,
                               ),
-                              const SizedBox(width: 10),
+                              const SizedBox(width: 1),
                               const Text(
                                 "Sampah\nTerpilah",
                                 style: TextStyle(
@@ -217,7 +210,7 @@ class HomeKonten extends StatelessWidget {
                                 "assets/images/sampahliar.png",
                                 height: 80,
                               ),
-                              const SizedBox(width: 10),
+                              const SizedBox(width: 1),
                               const Text(
                                 "Sampah\nLiar",
                                 style: TextStyle(
@@ -236,10 +229,7 @@ class HomeKonten extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(
-            height: 2,
-          ),
-          // berita
+          const SizedBox(height: 2),
           Container(
             padding: const EdgeInsets.only(left: 10, right: 10),
             child: Row(
@@ -277,7 +267,7 @@ class HomeKonten extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,
-                          color: purple,
+                          color: BlurStyle,
                         ),
                       ),
                     ),
@@ -286,9 +276,7 @@ class HomeKonten extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(
-            height: 7,
-          ),
+          const SizedBox(height: 7),
           Container(
             padding: const EdgeInsets.only(left: 10, right: 10),
             height: 250,
@@ -368,6 +356,38 @@ class HomeKonten extends StatelessWidget {
           )
         ],
       ),
+    );
+  }
+
+  void _showLoginRequiredDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Login Diperlukan'),
+          content: const Text(
+              'Anda harus login terlebih dahulu untuk mengakses halaman ini.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                // Arahkan ke halaman login jika diperlukan
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const Login()),
+                );
+              },
+              child: const Text('Login'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Batal'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

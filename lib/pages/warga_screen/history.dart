@@ -48,7 +48,7 @@ class History extends StatelessWidget {
         borderRadius: BorderRadius.circular(15.0),
       ),
       elevation: 8,
-      color: purple,
+      color: BlurStyle,
       margin: const EdgeInsets.symmetric(vertical: 12),
       child: Padding(
         padding: const EdgeInsets.all(12.0),

@@ -63,6 +63,7 @@ class _LoginState extends State<Login> {
       // Arahkan pengguna berdasarkan peran (role)
       if (user['role'] == 'warga') {
         Navigator.pushReplacement(
+          // ignore: use_build_context_synchronously
           context,
           MaterialPageRoute(builder: (context) => const HomePage()),
         );
@@ -170,7 +171,7 @@ class _LoginState extends State<Login> {
                   child: ElevatedButton(
                     onPressed: _login,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: purple,
+                      backgroundColor: BlurStyle,
                     ),
                     child: const Text(
                       'Masuk',
@@ -188,7 +189,7 @@ class _LoginState extends State<Login> {
                     );
                   },
                   child: const Text('Lupa Password?',
-                      style: TextStyle(fontSize: 16.0, color: purple)),
+                      style: TextStyle(fontSize: 16.0, color: BlurStyle)),
                 ),
                 const SizedBox(height: 16.0),
                 RichText(
@@ -199,7 +200,7 @@ class _LoginState extends State<Login> {
                       TextSpan(
                         text: "Daftar",
                         style: const TextStyle(
-                          color: purple,
+                          color: BlurStyle,
                           fontWeight: FontWeight.bold,
                         ),
                         recognizer: TapGestureRecognizer()
@@ -213,7 +214,33 @@ class _LoginState extends State<Login> {
                       ),
                     ],
                   ),
-                )
+                ),
+                const SizedBox(
+                  height: 15,
+                ),
+                RichText(
+                  text: TextSpan(
+                    text: "Masuk tanpa login? ",
+                    style: const TextStyle(fontSize: 16.0, color: Colors.black),
+                    children: <TextSpan>[
+                      TextSpan(
+                        text: "Masuk",
+                        style: const TextStyle(
+                          color: green,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        recognizer: TapGestureRecognizer()
+                          ..onTap = () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) => const HomePage()),
+                            );
+                          },
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

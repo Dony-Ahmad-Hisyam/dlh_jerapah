@@ -36,7 +36,7 @@ class _AkunPetugasState extends State<AkunPetugas> {
               width: double.infinity,
               height: 140,
               decoration: BoxDecoration(
-                color: purple,
+                color: BlurStyle,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Center(

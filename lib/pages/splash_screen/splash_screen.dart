@@ -1,7 +1,6 @@
 import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:dlh_project/constant/color.dart';
-import 'package:dlh_project/pages/form_opening/daftar.dart';
-import 'package:dlh_project/pages/form_opening/login.dart';
+import 'package:dlh_project/pages/warga_screen/home.dart';
 import 'package:flutter/material.dart';
 
 class SplashScreen extends StatelessWidget {
@@ -14,7 +13,7 @@ class SplashScreen extends StatelessWidget {
         children: [
           // Background color
           Container(
-            color: purple,
+            color: BlurStyle,
           ),
           // Top logo
           Positioned(
@@ -39,7 +38,7 @@ class SplashScreen extends StatelessWidget {
           ),
         ],
       ),
-      nextScreen: const Login(),
+      nextScreen: const HomePage(),
       splashIconSize: double.infinity,
       backgroundColor: Colors.transparent,
       splashTransition: SplashTransition.fadeTransition,

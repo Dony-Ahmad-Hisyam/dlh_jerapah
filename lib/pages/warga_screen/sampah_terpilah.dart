@@ -308,7 +308,7 @@ class _SampahTerpilahState extends State<SampahTerpilah> {
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: purple,
+                    backgroundColor: BlurStyle,
                   ),
                   child: const Text(
                     'Laporkan!',

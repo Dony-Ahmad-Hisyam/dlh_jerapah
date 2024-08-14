@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dlh_project/constant/color.dart';
 import 'package:dlh_project/pages/form_opening/login.dart';
-import 'package:dlh_project/widget/address_field.dart';
-import 'package:dlh_project/widget/password_field.dart';
+import 'package:dlh_project/pages/warga_screen/password_reset.dart';
 
 class Akun extends StatefulWidget {
   const Akun({super.key});
@@ -18,6 +17,7 @@ class _AkunState extends State<Akun> {
   String userPhone = '081234567890';
   String _selectedAddress = 'Default';
   final List<String> _addresses = ['Rumah', 'Kantor', 'Kos'];
+  bool _isLoggedIn = false;
 
   @override
   void initState() {
@@ -33,6 +33,7 @@ class _AkunState extends State<Akun> {
       userPhone = prefs.getString('user_phone') ?? '081234567890';
       _selectedAddress = prefs.getString('selected_address') ?? 'Default';
       _addresses.addAll(prefs.getStringList('addresses') ?? []);
+      _isLoggedIn = userName != 'Guest';
     });
   }
 
@@ -53,26 +54,118 @@ class _AkunState extends State<Akun> {
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 10),
-        child: Column(
-          children: [
-            _buildHeader(),
-            const SizedBox(height: 10),
-            Expanded(
-              child: ListView(
-                children: [
-                  _buildInfoField(label: 'Nama', value: userName),
-                  _buildInfoField(label: 'Email', value: userEmail),
-                  _buildInfoField(label: 'No. HP', value: userPhone),
-                  _buildAddressField(),
-                  _buildPasswordField(),
-                ],
+        child: _isLoggedIn ? _buildLoggedInContent() : _buildLoginButton(),
+      ),
+    );
+  }
+
+  Widget _buildLoggedInContent() {
+    return Column(
+      children: [
+        _buildHeader(),
+        const SizedBox(height: 10),
+        Expanded(
+          child: ListView(
+            children: [
+              _buildInfoField(label: 'Nama', value: userName),
+              _buildInfoField(label: 'Email', value: userEmail),
+              _buildInfoField(label: 'No. HP', value: userPhone),
+              Container(
+                margin: const EdgeInsets.symmetric(vertical: 5),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.grey[200],
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Alamat:',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const PasswordReset(),
+                          ),
+                        );
+                      },
+                      child: const Icon(Icons.add_location),
+                    ),
+                  ],
+                ),
               ),
+              Container(
+                  margin: const EdgeInsets.symmetric(vertical: 5),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[200],
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Ganti Password:',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const PasswordReset(),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          'Reset',
+                          style: TextStyle(fontSize: 16, color: red),
+                        ),
+                      )
+                    ],
+                  )),
+            ],
+          ),
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Expanded(
+              child: _buildEditAllButton(),
             ),
-            _buildEditAllButton(),
-            const SizedBox(height: 10),
-            _buildLogoutButton(),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildLogoutButton(),
+            ),
           ],
         ),
+        const SizedBox(height: 10),
+      ],
+    );
+  }
+
+  Widget _buildLoginButton() {
+    return Center(
+      child: ElevatedButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const Login(),
+            ),
+          );
+        },
+        child: const Text('Login'),
       ),
     );
   }
@@ -82,7 +175,7 @@ class _AkunState extends State<Akun> {
       width: double.infinity,
       height: 140,
       decoration: BoxDecoration(
-        color: purple,
+        color: BlurStyle,
         borderRadius: BorderRadius.circular(10),
       ),
       child: const Center(
@@ -123,37 +216,6 @@ class _AkunState extends State<Akun> {
     );
   }
 
-  Widget _buildAddressField() {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 5),
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: AddressField(
-        selectedAddress: _selectedAddress,
-        onAddAddress: _showAddAddressDialog,
-        onEditAddress: _showEditAddressDialog,
-        onDeleteAddress: _showDeleteAddressDialog,
-      ),
-    );
-  }
-
-  Widget _buildPasswordField() {
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 5),
-      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: PasswordField(
-        onResetPassword: _showEditPasswordDialog,
-      ),
-    );
-  }
-
   Widget _buildEditAllButton() {
     return ElevatedButton(
       onPressed: _showEditAllDialog,
@@ -167,158 +229,19 @@ class _AkunState extends State<Akun> {
       style: ElevatedButton.styleFrom(
         backgroundColor: Colors.red,
       ),
-      child: const Text('Logout'),
-    );
-  }
-
-  void _showEditAddressDialog(String address) {
-    TextEditingController addressController =
-        TextEditingController(text: address);
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Edit Alamat'),
-          content: TextField(
-            controller: addressController,
-            decoration: const InputDecoration(labelText: 'Alamat Baru'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  String newAddress = addressController.text;
-                  if (newAddress.isNotEmpty) {
-                    int index = _addresses.indexOf(address);
-                    if (index != -1) {
-                      _addresses[index] = newAddress;
-                      _selectedAddress = newAddress;
-                    }
-                  }
-                });
-                Navigator.of(context).pop();
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showDeleteAddressDialog(String address) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Hapus Alamat'),
-          content: const Text('Apakah Anda yakin ingin menghapus alamat ini?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  _addresses.remove(address);
-                  if (_addresses.isNotEmpty) {
-                    _selectedAddress = _addresses.first;
-                  } else {
-                    _selectedAddress = 'Default';
-                  }
-                });
-                Navigator.of(context).pop();
-              },
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showAddAddressDialog() {
-    TextEditingController _addressController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Tambah Alamat'),
-          content: TextField(
-            controller: _addressController,
-            decoration: const InputDecoration(labelText: 'Alamat Baru'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  String newAddress = _addressController.text;
-                  if (newAddress.isNotEmpty) {
-                    _addresses.add(newAddress);
-                    _selectedAddress = newAddress; // Update selected address
-                  }
-                });
-                Navigator.of(context).pop();
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void _showEditPasswordDialog() {
-    TextEditingController _passwordController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Ubah Password'),
-          content: TextField(
-            controller: _passwordController,
-            decoration: const InputDecoration(
-              labelText: 'Password Baru',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  // Implement logic to update password here
-                });
-                Navigator.of(context).pop();
-              },
-              child: const Text('Save'),
-            ),
-          ],
-        );
-      },
+      child: const Text(
+        'Logout',
+        style: TextStyle(color: Colors.white),
+      ),
     );
   }
 
   void _showEditAllDialog() {
-    TextEditingController _usernameController =
+    TextEditingController usernameController =
         TextEditingController(text: userName);
-    TextEditingController _emailController =
+    TextEditingController emailController =
         TextEditingController(text: userEmail);
-    TextEditingController _phoneController =
+    TextEditingController phoneController =
         TextEditingController(text: userPhone);
 
     showDialog(
@@ -332,15 +255,15 @@ class _AkunState extends State<Akun> {
                 child: Column(
                   children: [
                     TextField(
-                      controller: _usernameController,
+                      controller: usernameController,
                       decoration: const InputDecoration(labelText: 'Username'),
                     ),
                     TextField(
-                      controller: _emailController,
+                      controller: emailController,
                       decoration: const InputDecoration(labelText: 'Email'),
                     ),
                     TextField(
-                      controller: _phoneController,
+                      controller: phoneController,
                       decoration: const InputDecoration(labelText: 'No. HP'),
                     ),
                     const SizedBox(height: 10),
@@ -371,9 +294,9 @@ class _AkunState extends State<Akun> {
                 TextButton(
                   onPressed: () {
                     setState(() {
-                      userName = _usernameController.text;
-                      userEmail = _emailController.text;
-                      userPhone = _phoneController.text;
+                      userName = usernameController.text;
+                      userEmail = emailController.text;
+                      userPhone = phoneController.text;
                       // Save updated data to SharedPreferences
                       _saveUserData();
                     });
@@ -406,6 +329,7 @@ class _AkunState extends State<Akun> {
 
     // Navigate back to login page
     Navigator.pushReplacement(
+      // ignore: use_build_context_synchronously
       context,
       MaterialPageRoute(builder: (context) => const Login()),
     );

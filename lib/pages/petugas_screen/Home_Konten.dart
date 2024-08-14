@@ -1,6 +1,3 @@
-import 'package:dlh_project/pages/warga_screen/Berita.dart';
-import 'package:dlh_project/pages/warga_screen/sampah_liar.dart';
-import 'package:dlh_project/pages/warga_screen/sampah_terpilah.dart';
 import 'package:flutter/material.dart';
 import 'package:dlh_project/constant/color.dart';
 
@@ -29,7 +26,7 @@ class HomeKontenPetugas extends StatelessWidget {
             child: Container(
               width: double.infinity,
               decoration: BoxDecoration(
-                color: purple,
+                color: BlurStyle,
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
@@ -113,7 +110,7 @@ class HomeKontenPetugas extends StatelessWidget {
         borderRadius: BorderRadius.circular(15.0),
       ),
       elevation: 8,
-      color: purple,
+      color: BlurStyle,
       margin: const EdgeInsets.symmetric(vertical: 12),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
