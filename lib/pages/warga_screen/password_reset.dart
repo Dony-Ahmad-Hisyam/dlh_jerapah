@@ -125,8 +125,8 @@ class _PasswordResetState extends State<PasswordReset> {
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword
-                          ? Icons.visibility
-                          : Icons.visibility_off,
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                     ),
                     onPressed: () {
                       setState(() {
@@ -146,8 +146,8 @@ class _PasswordResetState extends State<PasswordReset> {
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscureNewPassword
-                          ? Icons.visibility
-                          : Icons.visibility_off,
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                     ),
                     onPressed: () {
                       setState(() {
@@ -167,8 +167,8 @@ class _PasswordResetState extends State<PasswordReset> {
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscureConfirmPassword
-                          ? Icons.visibility
-                          : Icons.visibility_off,
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                     ),
                     onPressed: () {
                       setState(() {

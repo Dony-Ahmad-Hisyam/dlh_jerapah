@@ -1,10 +1,8 @@
-import 'dart:ffi';
-
 import 'package:dlh_project/constant/color.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'home_konten.dart'; // Pastikan path ini benar
-import 'berita.dart'; // Import halaman lain yang digunakan
+import 'home_konten.dart';
+import 'berita.dart';
 import 'akun.dart';
 import 'history.dart';
 import 'uptd.dart';
@@ -39,7 +37,7 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final List<Widget> _pages = [
+    final List<Widget> pages = [
       HomeKonten(
         userName: userName ?? 'Guest',
         userId: userId ?? 0,
@@ -50,14 +48,13 @@ class _HomePageState extends State<HomePage> {
       const Akun(),
     ];
 
-    final List<BottomNavigationBarItem> _bottomNavigationBarItems = [
+    final List<BottomNavigationBarItem> bottomNavigationBarItems = [
       const BottomNavigationBarItem(
         icon: Icon(Icons.home),
         label: 'Home',
       ),
       if (_isLoggedIn)
         const BottomNavigationBarItem(
-          // Tampilkan Riwayat jika login
           icon: Icon(Icons.history),
           label: 'Riwayat',
         ),
@@ -77,10 +74,10 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       body: SafeArea(
-        child: _pages[_selectedIndex],
+        child: pages[_selectedIndex],
       ),
       bottomNavigationBar: BottomNavigationBar(
-        items: _bottomNavigationBarItems,
+        items: bottomNavigationBarItems,
         currentIndex: _selectedIndex,
         selectedItemColor: BlurStyle,
         unselectedItemColor: grey,

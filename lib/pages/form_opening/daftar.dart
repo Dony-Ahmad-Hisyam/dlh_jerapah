@@ -164,8 +164,8 @@ class _DaftarState extends State<Daftar> {
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword
-                          ? Icons.visibility
-                          : Icons.visibility_off,
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                     ),
                     onPressed: () {
                       setState(() {

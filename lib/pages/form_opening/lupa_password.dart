@@ -2,6 +2,7 @@ import 'package:dlh_project/pages/form_opening/Verifikasi_Otp.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:dlh_project/constant/color.dart';
 
 class LupaPassword extends StatefulWidget {
   const LupaPassword({super.key});
@@ -41,7 +42,12 @@ class _LupaPasswordState extends State<LupaPassword> {
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Terjadi kesalahan, coba lagi.')),
+        const SnackBar(
+          content: Text(
+            'Reset gagal, silakan periksa kembali email dan Nomor HP Anda.',
+          ),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -85,7 +91,7 @@ class _LupaPasswordState extends State<LupaPassword> {
                 child: ElevatedButton(
                   onPressed: resetPassword,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: BlurStyle,
                   ),
                   child: const Text(
                     'Reset Password',

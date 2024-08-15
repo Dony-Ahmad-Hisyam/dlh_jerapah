@@ -55,7 +55,12 @@ class _ResetPasswordState extends State<ResetPassword> {
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Terjadi kesalahan, coba lagi.')),
+        const SnackBar(
+          content: Text(
+            'Reset gagal, silakan periksa kembali email dan Nomor HP Anda.',
+          ),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -84,8 +89,8 @@ class _ResetPasswordState extends State<ResetPassword> {
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword
-                          ? Icons.visibility
-                          : Icons.visibility_off,
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                     ),
                     onPressed: () {
                       setState(() {
@@ -105,8 +110,8 @@ class _ResetPasswordState extends State<ResetPassword> {
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscureConfirmPassword
-                          ? Icons.visibility
-                          : Icons.visibility_off,
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                     ),
                     onPressed: () {
                       setState(() {

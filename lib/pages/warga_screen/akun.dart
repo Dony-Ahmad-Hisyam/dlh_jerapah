@@ -1,8 +1,12 @@
+import 'package:dlh_project/widget/infoField.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert'; // Untuk jsonEncode
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dlh_project/constant/color.dart';
 import 'package:dlh_project/pages/form_opening/login.dart';
 import 'package:dlh_project/pages/warga_screen/password_reset.dart';
+import 'package:dlh_project/pages/warga_screen/ganti_email.dart'; // Import GantiEmail page
 
 class Akun extends StatefulWidget {
   const Akun({super.key});
@@ -67,73 +71,11 @@ class _AkunState extends State<Akun> {
         Expanded(
           child: ListView(
             children: [
-              _buildInfoField(label: 'Nama', value: userName),
-              _buildInfoField(label: 'Email', value: userEmail),
-              _buildInfoField(label: 'No. HP', value: userPhone),
-              Container(
-                margin: const EdgeInsets.symmetric(vertical: 5),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Alamat:',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-                    ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const PasswordReset(),
-                          ),
-                        );
-                      },
-                      child: const Icon(Icons.add_location),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                  margin: const EdgeInsets.symmetric(vertical: 5),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[200],
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Ganti Password:',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const PasswordReset(),
-                            ),
-                          );
-                        },
-                        child: const Text(
-                          'Reset',
-                          style: TextStyle(fontSize: 16, color: red),
-                        ),
-                      )
-                    ],
-                  )),
+              InfoField(label: 'Nama', value: userName),
+              _buildEmailField(), // Custom email field with edit button
+              InfoField(label: 'No. HP', value: userPhone),
+              _buildAddressField(),
+              _buildPasswordResetField(),
             ],
           ),
         ),
@@ -192,7 +134,7 @@ class _AkunState extends State<Akun> {
     );
   }
 
-  Widget _buildInfoField({required String label, required String value}) {
+  Widget _buildEmailField() {
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 5),
       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
@@ -203,14 +145,99 @@ class _AkunState extends State<Akun> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            '$label:',
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Email:',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+              Text(
+                userEmail,
+                style: const TextStyle(fontSize: 16),
+              ),
+            ],
           ),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 16),
+          TextButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      const GantiEmail(), // Navigate to GantiEmail page
+                ),
+              );
+            },
+            child: const Text(
+              'Edit',
+              style: TextStyle(fontSize: 16, color: red),
+            ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddressField() {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'Alamat:',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PasswordReset(),
+                ),
+              );
+            },
+            child: const Icon(Icons.add_location),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPasswordResetField() {
+    return Container(
+      margin: const EdgeInsets.symmetric(vertical: 5),
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          const Text(
+            'Ganti Password:',
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const PasswordReset(),
+                ),
+              );
+            },
+            child: const Text(
+              'Edit',
+              style: TextStyle(fontSize: 16, color: red),
+            ),
+          )
         ],
       ),
     );
@@ -239,8 +266,6 @@ class _AkunState extends State<Akun> {
   void _showEditAllDialog() {
     TextEditingController usernameController =
         TextEditingController(text: userName);
-    TextEditingController emailController =
-        TextEditingController(text: userEmail);
     TextEditingController phoneController =
         TextEditingController(text: userPhone);
 
@@ -256,32 +281,11 @@ class _AkunState extends State<Akun> {
                   children: [
                     TextField(
                       controller: usernameController,
-                      decoration: const InputDecoration(labelText: 'Username'),
-                    ),
-                    TextField(
-                      controller: emailController,
-                      decoration: const InputDecoration(labelText: 'Email'),
+                      decoration: const InputDecoration(labelText: 'Nama'),
                     ),
                     TextField(
                       controller: phoneController,
                       decoration: const InputDecoration(labelText: 'No. HP'),
-                    ),
-                    const SizedBox(height: 10),
-                    const Text('Alamat:'),
-                    const SizedBox(height: 10),
-                    Column(
-                      children: _addresses.map((address) {
-                        return RadioListTile<String>(
-                          title: Text(address),
-                          value: address,
-                          groupValue: _selectedAddress,
-                          onChanged: (value) {
-                            setState(() {
-                              _selectedAddress = value!;
-                            });
-                          },
-                        );
-                      }).toList(),
                     ),
                   ],
                 ),
@@ -293,13 +297,8 @@ class _AkunState extends State<Akun> {
                 ),
                 TextButton(
                   onPressed: () {
-                    setState(() {
-                      userName = usernameController.text;
-                      userEmail = emailController.text;
-                      userPhone = phoneController.text;
-                      // Save updated data to SharedPreferences
-                      _saveUserData();
-                    });
+                    _updateUserData(
+                        usernameController.text, phoneController.text);
                     Navigator.of(context).pop();
                   },
                   child: const Text('Save'),
@@ -312,10 +311,52 @@ class _AkunState extends State<Akun> {
     );
   }
 
+  Future<void> _updateUserData(String name, String phone) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId =
+        prefs.getInt('user_id'); // Dapatkan user_id dari SharedPreferences
+    final token = prefs.getString('token');
+
+    if (userId == null || token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal mendapatkan data pengguna.')),
+      );
+      return;
+    }
+
+    final url = Uri.parse(
+        'https://jera.kerissumenep.com/api/user/update/$userId?_method=PUT');
+    final response = await http.put(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'nama': name,
+        'no_hp': phone,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        userName = name;
+        userPhone = phone;
+      });
+      _saveUserData();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Data berhasil diperbarui!')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal memperbarui data.')),
+      );
+    }
+  }
+
   void _saveUserData() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_name', userName);
-    await prefs.setString('user_email', userEmail);
     await prefs.setString('user_phone', userPhone);
     await prefs.setString('selected_address', _selectedAddress);
     await prefs.setStringList('addresses', _addresses);

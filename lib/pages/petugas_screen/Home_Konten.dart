@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:dlh_project/constant/color.dart';
 
 class HomeKontenPetugas extends StatelessWidget {
-  const HomeKontenPetugas({super.key});
+  final String userName;
+  final int userId;
+
+  const HomeKontenPetugas(
+      {super.key, required this.userName, required this.userId});
 
   @override
   Widget build(BuildContext context) {
@@ -10,15 +14,43 @@ class HomeKontenPetugas extends StatelessWidget {
       child: Column(
         children: [
           Container(
-            padding: const EdgeInsets.only(top: 27, left: 20),
-            alignment: Alignment.centerLeft,
-            child: const Text(
-              "Selamat Datang!",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w700,
-                color: Colors.black,
-              ),
+            padding: const EdgeInsets.only(top: 27, left: 20, right: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Selamat Datang, $userName!",
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.black,
+                  ),
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: green,
+                    borderRadius: BorderRadius.circular(8.0),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black26,
+                        blurRadius: 6.0,
+                        offset: Offset(2, 2),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(8.0),
+                  child: Center(
+                    child: Text(
+                      "$userId",
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                )
+              ],
             ),
           ),
           Padding(

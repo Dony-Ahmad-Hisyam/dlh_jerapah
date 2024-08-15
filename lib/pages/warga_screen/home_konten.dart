@@ -4,12 +4,32 @@ import 'package:dlh_project/pages/warga_screen/Berita.dart';
 import 'package:dlh_project/pages/warga_screen/sampah_liar.dart';
 import 'package:dlh_project/pages/warga_screen/sampah_terpilah.dart';
 import 'package:dlh_project/constant/color.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-class HomeKonten extends StatelessWidget {
-  final String userName;
+class HomeKonten extends StatefulWidget {
   final int userId;
 
-  const HomeKonten({super.key, required this.userName, required this.userId});
+  const HomeKonten({super.key, required this.userId, required String userName});
+
+  @override
+  State<HomeKonten> createState() => _HomeKontenState();
+}
+
+class _HomeKontenState extends State<HomeKonten> {
+  String? userName;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserName();
+  }
+
+  Future<void> _loadUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      userName = prefs.getString('user_name') ?? 'Guest';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +42,7 @@ class HomeKonten extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Selamat Datang, $userName!",
+                  "Selamat Datang, ${userName ?? 'Guest'}!",
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -44,7 +64,7 @@ class HomeKonten extends StatelessWidget {
                   padding: const EdgeInsets.all(8.0),
                   child: Center(
                     child: Text(
-                      "$userId",
+                      "${widget.userId}",
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -318,7 +338,7 @@ class HomeKonten extends StatelessWidget {
                     const SizedBox(
                       width: 250,
                       child: Text(
-                        "Dinas Lingkungan Hidup Kota Cilegon. 140 likes. Alamat : Jl. Kubang Laban No. 1 Bendung Karet ( samping pasar Hewan Kp. Kubang Laban )",
+                        "Dinas Lingkungan Hidup Kota Cilegon. 140 likes. Alamat : Jl. Kubang Laban No. 1 Bendung Karet ( samping perumahan Pondok Cilegon Indah )",
                         style: TextStyle(
                           color: Colors.black,
                           fontSize: 12,
@@ -341,7 +361,7 @@ class HomeKonten extends StatelessWidget {
                     const SizedBox(
                       width: 250,
                       child: Text(
-                        "Kantor (serapan dari bahasa Belanda kantoor, yang diturunkan dari bahasa Prancis comptoir) adalah sebutan untuk tempat yang digunakan untuk perniagaan",
+                        "Hadir dalam kegiatan pengembangan pengolahan sampah di daerah terpencil dan pesisir",
                         style: TextStyle(
                           color: Colors.black,
                           fontSize: 12,
@@ -353,7 +373,8 @@ class HomeKonten extends StatelessWidget {
                 ),
               ],
             ),
-          )
+          ),
+          const SizedBox(height: 50),
         ],
       ),
     );
@@ -364,26 +385,15 @@ class HomeKonten extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Login Diperlukan'),
+          title: const Text("Login Diperlukan"),
           content: const Text(
-              'Anda harus login terlebih dahulu untuk mengakses halaman ini.'),
-          actions: [
+              "Anda harus login terlebih dahulu untuk mengakses fitur ini."),
+          actions: <Widget>[
             TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                // Arahkan ke halaman login jika diperlukan
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const Login()),
-                );
-              },
-              child: const Text('Login'),
-            ),
-            TextButton(
+              child: const Text("OK"),
               onPressed: () {
                 Navigator.of(context).pop();
               },
-              child: const Text('Batal'),
             ),
           ],
         );
