@@ -387,13 +387,24 @@ class _HomeKontenState extends State<HomeKonten> {
         return AlertDialog(
           title: const Text("Login Diperlukan"),
           content: const Text(
-              "Anda harus login terlebih dahulu untuk mengakses fitur ini."),
-          actions: <Widget>[
+              'Anda harus login terlebih dahulu untuk mengakses halaman ini.'),
+          actions: [
             TextButton(
-              child: const Text("OK"),
+              onPressed: () {
+                Navigator.of(context).pop();
+                // Arahkan ke halaman login jika diperlukan
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const Login()),
+                );
+              },
+              child: const Text('Login'),
+            ),
+            TextButton(
               onPressed: () {
                 Navigator.of(context).pop();
               },
+              child: const Text('Batal'),
             ),
           ],
         );

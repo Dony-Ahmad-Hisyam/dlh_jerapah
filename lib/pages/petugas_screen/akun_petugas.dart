@@ -1,5 +1,8 @@
 import 'package:dlh_project/widget/infoField.dart';
 import 'package:flutter/material.dart';
+// ignore: depend_on_referenced_packages
+import 'package:http/http.dart' as http;
+import 'dart:convert'; // Untuk jsonEncode
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dlh_project/constant/color.dart';
 import 'package:dlh_project/pages/form_opening/login.dart';
@@ -17,7 +20,6 @@ class _AkunPetugasState extends State<AkunPetugas> {
   String userName = 'Guest';
   String userEmail = 'user@example.com';
   String userPhone = '081234567890';
-  String _selectedAddress = 'Default';
   final List<String> _addresses = ['Rumah', 'Kantor', 'Kos'];
   bool _isLoggedIn = false;
 
@@ -33,7 +35,6 @@ class _AkunPetugasState extends State<AkunPetugas> {
       userName = prefs.getString('user_name') ?? 'Guest';
       userEmail = prefs.getString('user_email') ?? 'user@example.com';
       userPhone = prefs.getString('user_phone') ?? '081234567890';
-      _selectedAddress = prefs.getString('selected_address') ?? 'Default';
       _addresses.addAll(prefs.getStringList('addresses') ?? []);
       _isLoggedIn = userName != 'Guest';
     });
@@ -70,8 +71,9 @@ class _AkunPetugasState extends State<AkunPetugas> {
           child: ListView(
             children: [
               InfoField(label: 'Nama', value: userName),
-              _buildEmailField(),
+              _buildEmailField(), // Custom email field with edit button
               InfoField(label: 'No. HP', value: userPhone),
+
               _buildPasswordResetField(),
             ],
           ),
@@ -232,8 +234,6 @@ class _AkunPetugasState extends State<AkunPetugas> {
   void _showEditAllDialog() {
     TextEditingController usernameController =
         TextEditingController(text: userName);
-    TextEditingController emailController =
-        TextEditingController(text: userEmail);
     TextEditingController phoneController =
         TextEditingController(text: userPhone);
 
@@ -249,17 +249,12 @@ class _AkunPetugasState extends State<AkunPetugas> {
                   children: [
                     TextField(
                       controller: usernameController,
-                      decoration: const InputDecoration(labelText: 'Username'),
-                    ),
-                    TextField(
-                      controller: emailController,
-                      decoration: const InputDecoration(labelText: 'Email'),
+                      decoration: const InputDecoration(labelText: 'Nama'),
                     ),
                     TextField(
                       controller: phoneController,
                       decoration: const InputDecoration(labelText: 'No. HP'),
                     ),
-                    const SizedBox(height: 10),
                   ],
                 ),
               ),
@@ -270,13 +265,8 @@ class _AkunPetugasState extends State<AkunPetugas> {
                 ),
                 TextButton(
                   onPressed: () {
-                    setState(() {
-                      userName = usernameController.text;
-                      userEmail = emailController.text;
-                      userPhone = phoneController.text;
-                      // Save updated data to SharedPreferences
-                      _saveUserData();
-                    });
+                    _updateUserData(
+                        usernameController.text, phoneController.text);
                     Navigator.of(context).pop();
                   },
                   child: const Text('Save'),
@@ -289,13 +279,53 @@ class _AkunPetugasState extends State<AkunPetugas> {
     );
   }
 
+  Future<void> _updateUserData(String name, String phone) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId =
+        prefs.getInt('user_id'); // Dapatkan user_id dari SharedPreferences
+    final token = prefs.getString('token');
+
+    if (userId == null || token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal mendapatkan data pengguna.')),
+      );
+      return;
+    }
+
+    final url = Uri.parse(
+        'https://jera.kerissumenep.com/api/user/update/$userId?_method=PUT');
+    final response = await http.put(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+      body: jsonEncode({
+        'nama': name,
+        'no_hp': phone,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      setState(() {
+        userName = name;
+        userPhone = phone;
+      });
+      _saveUserData();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Data berhasil diperbarui!')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal memperbarui data.')),
+      );
+    }
+  }
+
   void _saveUserData() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('user_name', userName);
-    await prefs.setString('user_email', userEmail);
     await prefs.setString('user_phone', userPhone);
-    await prefs.setString('selected_address', _selectedAddress);
-    await prefs.setStringList('addresses', _addresses);
   }
 
   Future<void> _logout() async {

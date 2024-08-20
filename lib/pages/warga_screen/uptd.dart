@@ -1,8 +1,43 @@
-import 'package:dlh_project/constant/color.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
-class Uptd extends StatelessWidget {
+class Uptd extends StatefulWidget {
   const Uptd({super.key});
+
+  @override
+  _UptdState createState() => _UptdState();
+}
+
+class _UptdState extends State<Uptd> {
+  final String baseUrl = "https://jera.kerissumenep.com/api/kecamatan";
+  late Future<List<Map<String, dynamic>>> _kecamatanData;
+
+  @override
+  void initState() {
+    super.initState();
+    _kecamatanData = fetchKecamatanData();
+  }
+
+  Future<List<Map<String, dynamic>>> fetchKecamatanData() async {
+    final response = await http.get(Uri.parse(baseUrl));
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final List<Map<String, dynamic>> kecamatanList = [];
+
+      for (var item in data['data']) {
+        kecamatanList.add({
+          'id': item['id'],
+          'nama_kecamatan': item['nama_kecamatan'],
+          'upt': item['upt']['nama_upt'],
+        });
+      }
+      return kecamatanList;
+    } else {
+      throw Exception('Failed to load kecamatan data');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +61,7 @@ class Uptd extends StatelessWidget {
               width: double.infinity,
               height: 140,
               decoration: BoxDecoration(
-                color: BlurStyle,
+                color: const Color.fromARGB(255, 57, 87, 254),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: const Center(
@@ -43,13 +78,30 @@ class Uptd extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Expanded(
-              child: ListView(
-                children: [
-                  _buildCard('UPTD 1', ['1. Cibeber', '2. Cilegon']),
-                  _buildCard('UPTD 2', ['1. Jombang', '2. Purwakarta']),
-                  _buildCard('UPTD 3', ['1. Gerogol', '2. Pulomerak']),
-                  _buildCard('UPTD 4', ['1. Ciwandan', '2. Citangkil']),
-                ],
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: _kecamatanData,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(child: Text('No data available'));
+                  }
+
+                  final kecamatanList = snapshot.data!;
+
+                  return ListView.builder(
+                    itemCount: kecamatanList.length,
+                    itemBuilder: (context, index) {
+                      final kecamatan = kecamatanList[index];
+                      return _buildCard(
+                        kecamatan['upt'],
+                        [kecamatan['nama_kecamatan']],
+                      );
+                    },
+                  );
+                },
               ),
             ),
           ],

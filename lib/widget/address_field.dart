@@ -1,58 +1,29 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
-class AddressField extends StatelessWidget {
-  final String selectedAddress;
-  final VoidCallback onAddAddress;
-  final ValueChanged<String> onEditAddress;
-  final ValueChanged<String> onDeleteAddress;
+class AlamatService {
+  final String baseUrl =
+      "https://jera.kerissumenep.com/api/alamat/get-by-user/";
 
-  const AddressField({
-    super.key,
-    required this.selectedAddress,
-    required this.onAddAddress,
-    required this.onEditAddress,
-    required this.onDeleteAddress,
-  });
+  Future<List<dynamic>> fetchAlamatByUser(int userId) async {
+    try {
+      final response = await http.get(Uri.parse("$baseUrl$userId"));
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            child: Text(
-              'Alamat: $selectedAddress',
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.location_on),
-            onPressed: () {
-              onEditAddress(selectedAddress);
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.add_location),
-            onPressed: () {
-              onAddAddress();
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.edit),
-            onPressed: () {
-              onEditAddress(selectedAddress);
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () {
-              onDeleteAddress(selectedAddress);
-            },
-          ),
-        ],
-      ),
-    );
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+
+        if (jsonData['success'] == true) {
+          return jsonData['data']; // Mengembalikan list alamat
+        } else {
+          throw Exception(jsonData['message']);
+        }
+      } else {
+        throw Exception(
+            "Gagal mengambil data. Kode status: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error: $e");
+      return [];
+    }
   }
 }

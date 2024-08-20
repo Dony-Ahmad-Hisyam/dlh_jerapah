@@ -1,16 +1,18 @@
 import 'dart:io';
-import 'package:dlh_project/constant/color.dart';
-import 'package:dlh_project/pages/warga_screen/home.dart';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:http/http.dart' as http;
+import 'package:dlh_project/pages/warga_screen/home.dart';
+import 'package:dlh_project/constant/color.dart';
 
 class SampahTerpilah extends StatefulWidget {
   const SampahTerpilah({Key? key}) : super(key: key);
 
   @override
-  // ignore: library_private_types_in_public_api
   _SampahTerpilahState createState() => _SampahTerpilahState();
 }
 
@@ -24,12 +26,82 @@ class _SampahTerpilahState extends State<SampahTerpilah> {
   String? _locationUrl;
   bool _photoSelected = false;
 
+  List<Map<String, dynamic>> _alamatList = [];
+  List<Map<String, dynamic>> _kecamatanList = [];
+  String? _pilihKecamatan;
+  String? _pilihAlamat;
+  String _deskripsi = '';
+
+  @override
+  void initState() {
+    super.initState();
+    fetchData();
+  }
+
+  Future<void> fetchData() async {
+    await Future.wait([
+      _fetchKecamatanData(),
+      _fetchAlamatData(),
+    ]);
+  }
+
+  Future<void> _fetchKecamatanData() async {
+    final String url = "https://jera.kerissumenep.com/api/kecamatan";
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _kecamatanList = List<Map<String, dynamic>>.from(data['data']);
+        });
+      } else {
+        _showErrorDialog('Failed to load kecamatan data');
+      }
+    } catch (e) {
+      _showErrorDialog('Error fetching kecamatan data: $e');
+    }
+  }
+
+  Future<void> _fetchAlamatData() async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      int? userId = prefs.getInt('user_id');
+
+      if (userId != null) {
+        var response = await http.get(
+            Uri.parse(
+                'https://jera.kerissumenep.com/api/alamat/get-by-user/$userId'),
+            headers: {"Accept": "application/json"});
+
+        if (response.statusCode == 200) {
+          var data = json.decode(response.body);
+
+          if (data['success']) {
+            setState(() {
+              _alamatList = List<Map<String, dynamic>>.from(data['data'] ?? []);
+            });
+            print('Data Alamat Diterima: ${data['data']}');
+          } else {
+            _showErrorDialog('Data Alamat Kosong atau Gagal Diambil');
+          }
+        } else {
+          _showErrorDialog(
+              'Terjadi kesalahan dalam pengambilan data. Status: ${response.statusCode}');
+        }
+      } else {
+        _showErrorDialog('User ID tidak ditemukan.');
+      }
+    } catch (e) {
+      _showErrorDialog('Error: $e');
+    }
+  }
+
   Future<void> _getImage() async {
     final pickedFile = await _picker.pickImage(source: ImageSource.camera);
     if (pickedFile != null) {
       setState(() {
         _image = pickedFile;
-        _photoSelected = true; // Set photoSelected to true
+        _photoSelected = true;
       });
     }
   }
@@ -111,16 +183,73 @@ class _SampahTerpilahState extends State<SampahTerpilah> {
     }
   }
 
-  @override
-  void dispose() {
-    _locationController.dispose();
-    super.dispose();
+  Future<void> _submitForm() async {
+    if (_pilihKecamatan == null ||
+        _pilihAlamat == null ||
+        _image == null ||
+        _deskripsi.isEmpty) {
+      _showErrorDialog('Please complete all fields before submitting.');
+      return;
+    }
+
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      int? userId = prefs.getInt('user_id');
+
+      if (userId != null) {
+        var request = http.MultipartRequest(
+          'POST',
+          Uri.parse(
+              'https://jera.kerissumenep.com/api/pengangkutan-sampah/store'),
+        );
+
+        request.fields['id_upt'] = _pilihKecamatan!;
+        request.fields['id_alamat'] = _pilihAlamat!;
+        request.fields['id_user_warga'] = userId.toString();
+        request.fields['deskripsi'] = _deskripsi;
+
+        var file =
+            await http.MultipartFile.fromPath('foto_sampah', _image!.path);
+        request.files.add(file);
+
+        var response = await request.send();
+
+        if (response.statusCode == 201) {
+          _showSuccessDialog('Data berhasil dikirim');
+        } else {
+          _showErrorDialog(
+              'Gagal mengirimkan Data. Status: ${response.statusCode}');
+        }
+      } else {
+        _showErrorDialog('User ID tidak ditemukan.');
+      }
+    } catch (e) {
+      _showErrorDialog('Error: $e');
+    }
   }
 
-  void _submitForm() {
-    if (_locationUrl != null) {
-      // Handle form submission logic here
-    }
+  void _showSuccessDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Success'),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HomePage()),
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -211,48 +340,50 @@ class _SampahTerpilahState extends State<SampahTerpilah> {
                               color: Colors.black),
                         ),
                         const SizedBox(height: 10),
-                        const TextField(
-                          decoration: InputDecoration(
-                            labelText: 'Nama',
+                        DropdownButtonFormField<String>(
+                          value: _pilihKecamatan,
+                          hint: const Text('Pilih Kecamatan'),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              _pilihKecamatan = newValue;
+                              // You may need to update alamatList based on selected Kecamatan
+                            });
+                          },
+                          items: _kecamatanList.map<DropdownMenuItem<String>>(
+                            (Map<String, dynamic> item) {
+                              return DropdownMenuItem<String>(
+                                value: item['id'].toString(),
+                                child: Text(item['nama_kecamatan'].toString()),
+                              );
+                            },
+                          ).toList(),
+                          decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                           ),
                         ),
                         const SizedBox(height: 10),
-                        const TextField(
-                          decoration: InputDecoration(
-                            labelText: 'No HP',
+                        DropdownButtonFormField<String>(
+                          value: _pilihAlamat,
+                          hint: const Text('Pilih Alamat'),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              _pilihAlamat = newValue;
+                            });
+                          },
+                          items: _alamatList.map<DropdownMenuItem<String>>(
+                            (Map<String, dynamic> item) {
+                              return DropdownMenuItem<String>(
+                                value: item['id'].toString(),
+                                child: Text(
+                                  '${item['kelurahan'].toString()}, ${item['kecamatan'].toString()}, ${item['deskripsi'].toString()}',
+                                ),
+                              );
+                            },
+                          ).toList(),
+                          decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                           ),
                         ),
-                        const SizedBox(height: 10),
-                        TextField(
-                          controller: _locationController,
-                          decoration: InputDecoration(
-                            labelText: 'Lokasi',
-                            border: const OutlineInputBorder(),
-                            suffixIcon: IconButton(
-                              icon: _locationFetched
-                                  ? const Icon(Icons.check_circle,
-                                      color: Colors.green)
-                                  : const Icon(Icons.location_on),
-                              onPressed: _getCurrentLocation,
-                            ),
-                            hintText: _locationFetched
-                                ? 'Sudah mendapatkan lokasi Anda'
-                                : 'Belum mendapatkan lokasi',
-                            hintStyle: TextStyle(
-                              color:
-                                  _locationFetched ? Colors.green : Colors.red,
-                            ),
-                          ),
-                          readOnly: true,
-                        ),
-                        const SizedBox(height: 10),
-                        if (_locationFetched)
-                          TextButton(
-                            onPressed: _launchURL,
-                            child: const Text('Lihat Lokasi'),
-                          ),
                         const SizedBox(height: 10),
                         TextField(
                           decoration: InputDecoration(
@@ -282,12 +413,15 @@ class _SampahTerpilahState extends State<SampahTerpilah> {
                             fit: BoxFit.cover,
                           ),
                         const SizedBox(height: 10),
-                        const TextField(
+                        TextField(
                           maxLines: 3,
                           decoration: InputDecoration(
                             labelText: 'Deskripsi',
                             border: OutlineInputBorder(),
                           ),
+                          onChanged: (value) {
+                            _deskripsi = value;
+                          },
                         ),
                       ],
                     ),
@@ -302,13 +436,9 @@ class _SampahTerpilahState extends State<SampahTerpilah> {
                 child: ElevatedButton(
                   onPressed: () {
                     _submitForm();
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const HomePage()),
-                    );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: BlurStyle,
+                    backgroundColor: BlurStyle, // Replace with desired color
                   ),
                   child: const Text(
                     'Laporkan!',

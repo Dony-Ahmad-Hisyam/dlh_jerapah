@@ -1,12 +1,42 @@
-import 'package:dlh_project/widget/infoField.dart';
+import 'dart:convert';
+import 'package:dlh_project/pages/warga_screen/tambah_alamat.dart';
+import 'package:dlh_project/widget/edit_alamat.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert'; // Untuk jsonEncode
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:dlh_project/constant/color.dart';
 import 'package:dlh_project/pages/form_opening/login.dart';
 import 'package:dlh_project/pages/warga_screen/password_reset.dart';
-import 'package:dlh_project/pages/warga_screen/ganti_email.dart'; // Import GantiEmail page
+import 'package:dlh_project/pages/warga_screen/ganti_email.dart';
+import 'package:dlh_project/widget/infoField.dart';
+import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
+
+class AlamatService {
+  final String baseUrl =
+      "https://jera.kerissumenep.com/api/alamat/get-by-user/";
+
+  Future<List<dynamic>> fetchAlamatByUser(int userId) async {
+    try {
+      final response = await http.get(Uri.parse("$baseUrl$userId"));
+
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+
+        if (jsonData['success'] == true) {
+          return jsonData['data']; // Mengembalikan list alamat
+        } else {
+          throw Exception(jsonData['message']);
+        }
+      } else {
+        throw Exception(
+            "Gagal mengambil data. Kode status: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("Error: $e");
+      return [];
+    }
+  }
+}
 
 class Akun extends StatefulWidget {
   const Akun({super.key});
@@ -19,14 +49,14 @@ class _AkunState extends State<Akun> {
   String userName = 'Guest';
   String userEmail = 'user@example.com';
   String userPhone = '081234567890';
-  String _selectedAddress = 'Default';
-  final List<String> _addresses = ['Rumah', 'Kantor', 'Kos'];
+  List<dynamic> _alamatData = [];
   bool _isLoggedIn = false;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _fetchAlamatData();
   }
 
   Future<void> _loadUserData() async {
@@ -35,10 +65,30 @@ class _AkunState extends State<Akun> {
       userName = prefs.getString('user_name') ?? 'Guest';
       userEmail = prefs.getString('user_email') ?? 'user@example.com';
       userPhone = prefs.getString('user_phone') ?? '081234567890';
-      _selectedAddress = prefs.getString('selected_address') ?? 'Default';
-      _addresses.addAll(prefs.getStringList('addresses') ?? []);
       _isLoggedIn = userName != 'Guest';
     });
+  }
+
+  Future<void> _fetchAlamatData() async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getInt('user_id');
+
+    if (userId != null) {
+      AlamatService alamatService = AlamatService();
+      List<dynamic> data = await alamatService.fetchAlamatByUser(userId);
+
+      setState(() {
+        _alamatData = data;
+      });
+    }
+  }
+
+  void _openGoogleMaps(String url) async {
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
   }
 
   @override
@@ -72,7 +122,7 @@ class _AkunState extends State<Akun> {
           child: ListView(
             children: [
               InfoField(label: 'Nama', value: userName),
-              _buildEmailField(), // Custom email field with edit button
+              _buildEmailField(),
               InfoField(label: 'No. HP', value: userPhone),
               _buildAddressField(),
               _buildPasswordResetField(),
@@ -163,8 +213,7 @@ class _AkunState extends State<Akun> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) =>
-                      const GantiEmail(), // Navigate to GantiEmail page
+                  builder: (context) => const GantiEmail(),
                 ),
               );
             },
@@ -186,27 +235,101 @@ class _AkunState extends State<Akun> {
         color: Colors.grey[200],
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Alamat:',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const PasswordReset(),
+          Row(
+            mainAxisAlignment: MainAxisAlignment
+                .spaceBetween, // Menjaga agar icon dan tulisan sejajar
+            children: [
+              const Text(
+                'Alamat:',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(right: 20),
+                child: GestureDetector(
+                  onTap: () {
+                    // Navigate to AddAlamatScreen
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const TambahAlamat(),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    'Add',
+                    style: TextStyle(fontSize: 16, color: Colors.red),
+                  ),
                 ),
-              );
-            },
-            child: const Icon(Icons.add_location),
+              ),
+            ],
           ),
+          const SizedBox(height: 10),
+          _alamatData.isEmpty
+              ? const Center(child: Text("Tidak ada data alamat."))
+              : Column(
+                  children: _alamatData.map((alamat) {
+                    return ListTile(
+                      title: Text(
+                          "${alamat['kecamatan']}, ${alamat['kelurahan']}"),
+                      subtitle: Text("${alamat['deskripsi']}"),
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: <Widget>[
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            color: Colors.orange,
+                            onPressed: () => _editAlamat(context, alamat),
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete),
+                            color: Colors.red,
+                            onPressed: () {
+                              // Add your delete action here
+                              // _deleteAlamat(alamat);
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.location_on),
+                            color: Colors.blue,
+                            onPressed: () {
+                              final url = alamat['kordinat'];
+                              if (url != null) {
+                                _openGoogleMaps(url);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+                ),
         ],
       ),
     );
+  }
+
+  void _editAlamat(BuildContext context, Map<String, dynamic> alamat) {
+    Navigator.of(context)
+        .push(
+      MaterialPageRoute(
+        builder: (context) => EditAlamatScreen(alamat: alamat),
+      ),
+    )
+        .then((updatedAlamat) {
+      if (updatedAlamat != null) {
+        // Handle the updated data here
+        // For example, update the list with the new data
+        setState(() {
+          final index = _alamatData
+              .indexWhere((a) => a['kordinat'] == updatedAlamat['kordinat']);
+          if (index != -1) {
+            _alamatData[index] = updatedAlamat;
+          }
+        });
+      }
+    });
   }
 
   Widget _buildPasswordResetField() {
@@ -272,107 +395,61 @@ class _AkunState extends State<Akun> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return AlertDialog(
-              title: const Text('Edit Semua Data'),
-              content: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: usernameController,
-                      decoration: const InputDecoration(labelText: 'Nama'),
-                    ),
-                    TextField(
-                      controller: phoneController,
-                      decoration: const InputDecoration(labelText: 'No. HP'),
-                    ),
-                  ],
-                ),
+        return AlertDialog(
+          title: const Text('Edit Semua Data'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: usernameController,
+                decoration: const InputDecoration(labelText: 'Nama'),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    _updateUserData(
-                        usernameController.text, phoneController.text);
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Save'),
-                ),
-              ],
-            );
-          },
+              TextField(
+                controller: phoneController,
+                decoration: const InputDecoration(labelText: 'No. HP'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Batal'),
+            ),
+            TextButton(
+              onPressed: () async {
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+
+                setState(() {
+                  userName = usernameController.text;
+                  userPhone = phoneController.text;
+                });
+
+                await prefs.setString('user_name', userName);
+                await prefs.setString('user_phone', userPhone);
+
+                Navigator.of(context).pop();
+              },
+              child: const Text('Simpan'),
+            ),
+          ],
         );
       },
     );
   }
 
-  Future<void> _updateUserData(String name, String phone) async {
-    final prefs = await SharedPreferences.getInstance();
-    final userId =
-        prefs.getInt('user_id'); // Dapatkan user_id dari SharedPreferences
-    final token = prefs.getString('token');
-
-    if (userId == null || token == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gagal mendapatkan data pengguna.')),
-      );
-      return;
-    }
-
-    final url = Uri.parse(
-        'https://jera.kerissumenep.com/api/user/update/$userId?_method=PUT');
-    final response = await http.put(
-      url,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({
-        'nama': name,
-        'no_hp': phone,
-      }),
-    );
-
-    if (response.statusCode == 200) {
-      setState(() {
-        userName = name;
-        userPhone = phone;
-      });
-      _saveUserData();
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Data berhasil diperbarui!')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Gagal memperbarui data.')),
-      );
-    }
-  }
-
-  void _saveUserData() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_name', userName);
-    await prefs.setString('user_phone', userPhone);
-    await prefs.setString('selected_address', _selectedAddress);
-    await prefs.setStringList('addresses', _addresses);
-  }
-
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
-
-    // Clear all data from SharedPreferences
     await prefs.clear();
-
-    // Navigate back to login page
+    setState(() {
+      _isLoggedIn = false;
+    });
     Navigator.pushReplacement(
-      // ignore: use_build_context_synchronously
       context,
-      MaterialPageRoute(builder: (context) => const Login()),
+      MaterialPageRoute(
+        builder: (context) => const Login(),
+      ),
     );
   }
 }
