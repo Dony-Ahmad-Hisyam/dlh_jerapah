@@ -38,6 +38,43 @@ class _SampahTerpilahState extends State<SampahTerpilah> {
     fetchData();
   }
 
+  Future<void> _getImage(ImageSource source) async {
+    final pickedImage = await _picker.pickImage(source: source);
+    if (pickedImage != null) {
+      setState(() {
+        _image = pickedImage;
+        _photoSelected = true;
+      });
+    }
+  }
+
+  void _showImageSourceSelection() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Pilih Sumber Foto'),
+          actions: [
+            TextButton(
+              child: const Text('Kamera'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _getImage(ImageSource.camera);
+              },
+            ),
+            TextButton(
+              child: const Text('Galeri'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _getImage(ImageSource.gallery);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> fetchData() async {
     await Future.wait([
       _fetchKecamatanData(),
@@ -92,16 +129,6 @@ class _SampahTerpilahState extends State<SampahTerpilah> {
       }
     } catch (e) {
       _showErrorDialog('Error: $e');
-    }
-  }
-
-  Future<void> _getImage() async {
-    final pickedFile = await _picker.pickImage(source: ImageSource.camera);
-    if (pickedFile != null) {
-      setState(() {
-        _image = pickedFile;
-        _photoSelected = true;
-      });
     }
   }
 
@@ -306,7 +333,7 @@ class _SampahTerpilahState extends State<SampahTerpilah> {
                           'assets/images/sampah.png',
                           height: 100,
                         ),
-                        const SizedBox(width: 5),
+                        const SizedBox(width: 30),
                         const Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -315,8 +342,8 @@ class _SampahTerpilahState extends State<SampahTerpilah> {
                                 "Sampah terpilah adalah sampah yang dipisahkan berdasarkan jenis sebelum dibuang atau didaur ulang, memudahkan pengelolaan dan mengurangi dampak lingkungan.",
                                 style: TextStyle(
                                     color: white,
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500),
                               )
                             ],
                           ),
@@ -406,7 +433,7 @@ class _SampahTerpilahState extends State<SampahTerpilah> {
                                   ? const Icon(Icons.check_circle,
                                       color: Colors.green)
                                   : const Icon(Icons.camera_alt),
-                              onPressed: _getImage,
+                              onPressed: _showImageSourceSelection,
                             ),
                             hintText: _photoSelected
                                 ? 'Sudah mendapatkan foto'

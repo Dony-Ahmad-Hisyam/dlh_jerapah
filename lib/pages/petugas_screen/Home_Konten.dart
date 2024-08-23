@@ -1,3 +1,4 @@
+import 'package:dlh_project/pages/petugas_screen/penimbangan.dart';
 import 'package:dlh_project/pages/petugas_screen/sampah.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -37,25 +38,42 @@ Future<List<SampahData>> fetchSampahData() async {
   return allData;
 }
 
-Future<void> updateStatus(int idSampah, int idUserPetugas) async {
-  final url = Uri.parse(
-      'https://jera.kerissumenep.com/api/pengangkutan-sampah/proses/$idSampah');
-  final response = await http.post(
-    url,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: jsonEncode({
-      'id_user_petugas': idUserPetugas,
-    }),
-  );
+Future<void> updateStatus(
+    int idSampah, int idUserPetugas, String action) async {
+  final prefs = await SharedPreferences.getInstance();
+  final String? token = prefs.getString('token');
 
-  if (response.statusCode == 200) {
-    print('Status updated successfully');
-  } else {
-    final errorMessage =
-        jsonDecode(response.body)['message'] ?? 'Unknown error';
-    throw Exception('Failed to update status: $errorMessage');
+  final String apiUrl =
+      'https://jera.kerissumenep.com/api/pengangkutan-sampah/proses/$idSampah';
+
+  final Map<String, String> headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer $token',
+  };
+
+  final Map<String, dynamic> body = {
+    'id_user_petugas': idUserPetugas,
+  };
+
+  try {
+    // Send the POST request
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      headers: headers,
+      body: json.encode(body),
+    );
+
+    if (response.statusCode == 200) {
+      print('Status updated successfully.');
+    } else {
+      // Handle the error
+      final errorMessage =
+          jsonDecode(response.body)['message'] ?? 'Unknown error';
+      throw Exception('Failed to update status: $errorMessage');
+    }
+  } catch (e) {
+    // Handle any exceptions
+    throw Exception('Error updating status: $e');
   }
 }
 
@@ -155,14 +173,8 @@ class _HomeKontenPetugasState extends State<HomeKontenPetugas> {
                       case 'proses':
                         statusColor = Colors.yellow;
                         break;
-                      case 'done':
-                        statusColor = Colors.green;
-                        break;
                       case 'pending':
                         statusColor = Colors.orange.shade300;
-                        break;
-                      case 'failed':
-                        statusColor = Colors.red;
                         break;
                       default:
                         statusColor = Colors.grey;
@@ -220,12 +232,30 @@ class _HomeKontenPetugasState extends State<HomeKontenPetugas> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Sampah Terpilah',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Sampah Terpilah',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    IconButton(
+                      onPressed: () {
+                        _showDeleteConfirmationDialog(context);
+                      },
+                      icon: const Icon(Icons.delete),
+                      color: Colors.red,
+                      hoverColor: Colors.red.shade700,
+                      focusColor: Colors.red,
+                      splashColor: Colors.red.shade200,
+                    )
+                  ],
                 ),
               ),
               const SizedBox(height: 10),
@@ -262,6 +292,31 @@ class _HomeKontenPetugasState extends State<HomeKontenPetugas> {
     required int idUserPetugas,
     required Color statusColor,
   }) {
+    // Determine button text and onPressed function based on status
+    String buttonText;
+    void Function()? buttonOnPressed;
+
+    if (status.toLowerCase() == 'pending') {
+      buttonText = 'Proses';
+      buttonOnPressed = () => _showConfirmationDialog(
+            context,
+            idSampah,
+            idUserPetugas,
+            'proses',
+          );
+    } else if (status.toLowerCase() == 'proses') {
+      buttonText = 'Done';
+      buttonOnPressed = () => _showConfirmationDialog(
+            context,
+            idSampah,
+            idUserPetugas,
+            'done',
+          );
+    } else {
+      buttonText = 'Status Unknown';
+      buttonOnPressed = null;
+    }
+
     return Card(
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10.0),
@@ -310,7 +365,7 @@ class _HomeKontenPetugasState extends State<HomeKontenPetugas> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.yellow,
+                      color: statusColor,
                       borderRadius: BorderRadius.circular(5),
                     ),
                     child: Text(
@@ -360,33 +415,48 @@ class _HomeKontenPetugasState extends State<HomeKontenPetugas> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                ElevatedButton(
-                  onPressed: () => _openMap(mapUrl),
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: Colors.green,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.only(right: 5),
+                    child: ElevatedButton(
+                      onPressed: () => _openMap(mapUrl),
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.green,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
+                      ),
+                      child: const Text(
+                        'Buka Map',
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
-                  child: const Text('Buka Map'),
                 ),
-                const SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: () =>
-                      _showConfirmationDialog(context, idSampah, idUserPetugas),
-                  style: ElevatedButton.styleFrom(
-                    foregroundColor: Colors.white,
-                    backgroundColor: Colors.blueAccent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    child: ElevatedButton(
+                      onPressed: buttonOnPressed,
+                      style: ElevatedButton.styleFrom(
+                        foregroundColor: Colors.white,
+                        backgroundColor: Colors.blueAccent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                        buttonText,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
-                  child: const Text('Update Proses'),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
           ],
         ),
       ),
@@ -394,47 +464,97 @@ class _HomeKontenPetugasState extends State<HomeKontenPetugas> {
   }
 
   void _showConfirmationDialog(
-      BuildContext context, int idSampah, int idUserPetugas) {
+      BuildContext context, int idSampah, int idUserPetugas, String action) {
+    String dialogTitle;
+    String dialogContent;
+
+    switch (action) {
+      case 'proses':
+        dialogTitle = 'Konfirmasi Proses';
+        dialogContent =
+            'Apakah Anda yakin ingin mengupdate status menjadi proses?';
+        break;
+      case 'done':
+        dialogTitle = 'Konfirmasi Done';
+        dialogContent =
+            'Apakah Anda yakin ingin mengupdate status menjadi done? Pastikan data penimbangan sudah diisi.';
+        break;
+      default:
+        dialogTitle = 'Konfirmasi';
+        dialogContent = 'Apakah Anda yakin ingin melanjutkan tindakan ini?';
+    }
+
     showDialog(
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Konfirmasi'),
-          content: const Text(
-              'Apakah Anda yakin ingin mengupdate status menjadi proses ?'),
+          title: Text(dialogTitle),
+          content: Text(dialogContent),
           actions: <Widget>[
             TextButton(
               child: const Text('Batal'),
               onPressed: () {
-                Navigator.of(context).pop();
+                Navigator.of(context).pop(); // Close the dialog
               },
             ),
             ElevatedButton(
               child: const Text('Ya'),
               onPressed: () async {
                 Navigator.of(context).pop(); // Close the dialog
+
+                if (action == 'done') {
+                  // Navigate to Penimbangan screen
+                  bool isDataFilled = await Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => Penimbangan(idSampah: idSampah),
+                    ),
+                  );
+
+                  if (!isDataFilled) {
+                    // Show a message if data is not filled
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                            'Silakan isi data penimbangan terlebih dahulu.'),
+                      ),
+                    );
+                    return;
+                  }
+                }
+
+                // Show a loading snackbar
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Memproses pembaruan status...'),
+                  ),
+                );
+
                 try {
-                  // Menampilkan indikator snackbar sebelum memulai proses pembaruan status
+                  // Perform the status update based on action
+                  if (action == 'proses') {
+                    await updateStatus(idSampah, idUserPetugas, 'proses');
+                  } else if (action == 'done') {
+                    await updateStatus(idSampah, idUserPetugas, 'done');
+                  }
+
+                  // Show success snackbar
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                        content: Text('Memproses pembaruan status...')),
+                      content: Text('Status berhasil diperbarui'),
+                    ),
                   );
 
-                  await updateStatus(idSampah, idUserPetugas);
-
-                  // Menampilkan snackbar ketika pembaruan status berhasil
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Status berhasil diperbarui')),
-                  );
-
-                  // Memperbarui data setelah status diperbarui
+                  // Refresh data after status update
                   setState(() {
                     futureSampahData = fetchSampahData();
                   });
                 } catch (e) {
-                  // Menampilkan snackbar ketika pembaruan status gagal
+                  // Show error snackbar
                   ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Gagal memperbarui status: $e')),
+                    SnackBar(
+                      content: Text('Gagal memperbarui status: $e'),
+                    ),
                   );
                 }
               },
@@ -447,10 +567,42 @@ class _HomeKontenPetugasState extends State<HomeKontenPetugas> {
 
   void _openMap(String mapUrl) async {
     final Uri url = Uri.parse(mapUrl);
+
     if (await canLaunchUrl(url)) {
       await launchUrl(url);
     } else {
-      throw Exception('Could not launch $mapUrl');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not launch map: $mapUrl')),
+      );
     }
+  }
+
+  void _showDeleteConfirmationDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Konfirmasi Hapus'),
+          content: const Text(
+              'Apakah Anda yakin ingin menghapus permohonan sampah ini?'),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Batal'),
+              onPressed: () {
+                Navigator.of(context).pop(); // Close the dialog
+              },
+            ),
+            ElevatedButton(
+              child: const Text('Hapus'),
+              onPressed: () {
+                // Perform the delete action here
+
+                Navigator.of(context).pop(); // Close the dialog
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 }

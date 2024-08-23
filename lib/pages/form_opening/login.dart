@@ -53,7 +53,7 @@ class _LoginState extends State<Login> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', token);
       await prefs.setString('user_name', user['nama']);
-      await prefs.setString('upt_id', user['id_upt']); // Save as String
+
       await prefs.setInt(
           'user_id', user['id']); // This is correct if user_id is an integer
       await prefs.setString('user_email', user['email']);
@@ -73,6 +73,7 @@ class _LoginState extends State<Login> {
           MaterialPageRoute(builder: (context) => const HomePage()),
         );
       } else if (user['role'] == 'petugas') {
+        await prefs.setString('upt_id', user['id_upt']);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Login berhasil!'),

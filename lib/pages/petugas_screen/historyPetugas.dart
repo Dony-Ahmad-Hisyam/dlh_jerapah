@@ -14,8 +14,8 @@ Future<List<SampahData>> fetchSampahData() async {
   }
 
   final urls = [
-    'https://jera.kerissumenep.com/api/pengangkutan-sampah/history/by-upt/$userId',
-    'https://jera.kerissumenep.com/api/pengangkutan-sampah/history/by-petugas/$userId',
+    'https://jera.kerissumenep.com/api/pengangkutan-sampah/history/by-petugas/$userId/done',
+    'https://jera.kerissumenep.com/api/pengangkutan-sampah/history/by-petugas/$userId/failed',
   ];
 
   List<SampahData> allData = [];
@@ -34,6 +34,28 @@ Future<List<SampahData>> fetchSampahData() async {
   allData.sort((a, b) => b.id.compareTo(a.id));
 
   return allData;
+}
+
+Future<void> updateStatus(int idSampah, int idUserPetugas) async {
+  final url = Uri.parse(
+      'https://jera.kerissumenep.com/api/pengangkutan-sampah/proses/$idSampah');
+  final response = await http.post(
+    url,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode({
+      'id_user_petugas': idUserPetugas,
+    }),
+  );
+
+  if (response.statusCode == 200) {
+    print('Status updated successfully');
+  } else {
+    final errorMessage =
+        jsonDecode(response.body)['message'] ?? 'Unknown error';
+    throw Exception('Failed to update status: $errorMessage');
+  }
 }
 
 class HistoryPetugas extends StatefulWidget {
@@ -57,7 +79,6 @@ class _HistoryPetugasState extends State<HistoryPetugas> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text(
@@ -83,9 +104,7 @@ class _HistoryPetugasState extends State<HistoryPetugas> {
                 } else if (snapshot.hasError) {
                   return Text('Error: ${snapshot.error}');
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(
-                    child: Text('Tidak ada Data Riwayat.'),
-                  );
+                  return const Center(child: Text('Tidak ada data Riwayat.'));
                 } else {
                   return ListView.builder(
                     shrinkWrap: true,
@@ -94,18 +113,11 @@ class _HistoryPetugasState extends State<HistoryPetugas> {
                     itemBuilder: (context, index) {
                       SampahData data = snapshot.data![index];
                       Color statusColor;
-
                       switch (data.status.toLowerCase()) {
-                        case 'proses':
-                          statusColor = Colors.yellow;
-                          break;
                         case 'done':
                           statusColor = Colors.green;
                           break;
-                        case 'pending':
-                          statusColor = Colors.orange.shade300;
-                          break;
-                        case 'batal':
+                        case 'failed':
                           statusColor = Colors.red;
                           break;
                         default:
@@ -113,15 +125,17 @@ class _HistoryPetugasState extends State<HistoryPetugas> {
                       }
 
                       return _buildOuterCard(
-                        index: index + 1,
                         name: data.name,
+                        namaUpt: data.namaUpt,
+                        FotoSampah: data.fotoSampah,
                         phone: data.noHp,
                         status: data.status,
-                        location:
+                        lokasi:
                             '${data.alamat.kelurahan}, ${data.alamat.kecamatan}, ${data.alamat.deskripsi}',
                         description: data.deskripsi,
                         mapUrl: data.alamat.kordinat,
                         idSampah: data.id,
+                        // idUserPetugas: widget.userId,
                         statusColor: statusColor,
                       );
                     },
@@ -136,14 +150,17 @@ class _HistoryPetugasState extends State<HistoryPetugas> {
   }
 
   Widget _buildOuterCard({
-    required int index, // Adding the index parameter
     required String name,
+    required String namaUpt,
+    // ignore: non_constant_identifier_names
+    required String FotoSampah,
     required String phone,
     required String status,
-    required String location,
+    required String lokasi,
     required String description,
     required String mapUrl,
     required int idSampah,
+    // required int idUserPetugas,
     required Color statusColor,
   }) {
     return Padding(
@@ -151,23 +168,35 @@ class _HistoryPetugasState extends State<HistoryPetugas> {
       child: Card(
         color: Colors.blue,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(15.0),
         ),
         elevation: 8,
-        margin: const EdgeInsets.symmetric(vertical: 5),
+        margin: const EdgeInsets.symmetric(vertical: 12),
         child: Padding(
-          padding: const EdgeInsets.all(5),
+          padding: const EdgeInsets.all(12.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              const Text(
+                'Sampah Terpilah',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 10),
               _buildInnerCard(
                 name: name,
+                fotoSampah: FotoSampah,
+                namaUpt: namaUpt,
                 phone: phone,
                 status: status,
-                location: location,
+                lokasi: lokasi,
                 description: description,
                 mapUrl: mapUrl,
                 idSampah: idSampah,
+                // idUserPetugas: idUserPetugas,
                 statusColor: statusColor,
               ),
             ],
@@ -179,12 +208,15 @@ class _HistoryPetugasState extends State<HistoryPetugas> {
 
   Widget _buildInnerCard({
     required String name,
+    required String namaUpt,
+    required String fotoSampah,
     required String phone,
     required String status,
-    required String location,
+    required String lokasi,
     required String description,
     required String mapUrl,
     required int idSampah,
+    // required int idUserPetugas,
     required Color statusColor,
   }) {
     return Card(
@@ -198,7 +230,7 @@ class _HistoryPetugasState extends State<HistoryPetugas> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Nama   : $name',
+              'Nama       : $name',
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.black,
@@ -206,7 +238,15 @@ class _HistoryPetugasState extends State<HistoryPetugas> {
             ),
             const SizedBox(height: 8),
             Text(
-              'No. Hp  : $phone',
+              'UPT          : $namaUpt',
+              style: const TextStyle(
+                fontSize: 16,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'No. Hp     : $phone',
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.black,
@@ -216,33 +256,34 @@ class _HistoryPetugasState extends State<HistoryPetugas> {
             Row(
               children: [
                 const Text(
-                  'Status  : ',
+                  'Status      : ',
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.black,
                   ),
                 ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: statusColor,
-                    borderRadius: BorderRadius.circular(5),
-                  ),
-                  child: Text(
-                    status,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.black,
+                Flexible(
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: statusColor,
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    child: Text(
+                      status,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Colors.black,
+                      ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
               ],
             ),
             const SizedBox(height: 8),
             Text(
-              'Alamat  : $location',
+              'Lokasi      : $lokasi',
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.black,
@@ -250,23 +291,45 @@ class _HistoryPetugasState extends State<HistoryPetugas> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Deskripsi: $description',
+              'Deskripsi : $description',
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.black,
               ),
             ),
+            const SizedBox(height: 8),
+            if (fotoSampah.isNotEmpty)
+              Image.network(
+                'https://jera.kerissumenep.com/storage/foto-sampah/$fotoSampah',
+                errorBuilder: (context, error, stackTrace) {
+                  return const Text('Gambar tidak dapat ditampilkan');
+                },
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return const Center(
+                    child: CircularProgressIndicator(),
+                  );
+                },
+              )
+            else
+              const Text('Tidak ada foto tersedia.'),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () => _openMap(mapUrl),
-              style: ElevatedButton.styleFrom(
-                foregroundColor: Colors.white,
-                backgroundColor: Colors.green,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                ElevatedButton(
+                  onPressed: () => _openMap(mapUrl),
+                  style: ElevatedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    backgroundColor: Colors.green,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('Buka Map'),
                 ),
-              ),
-              child: const Text('Lihat Lokasi '),
+                const SizedBox(width: 10),
+              ],
             ),
             const SizedBox(height: 8),
           ],
@@ -275,12 +338,12 @@ class _HistoryPetugasState extends State<HistoryPetugas> {
     );
   }
 
-  Future<void> _openMap(String mapUrl) async {
-    final Uri mapUri = Uri.parse(mapUrl);
-    if (await canLaunchUrl(mapUri)) {
-      await launchUrl(mapUri);
+  void _openMap(String mapUrl) async {
+    final Uri url = Uri.parse(mapUrl);
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
     } else {
-      throw 'Could not launch $mapUrl';
+      throw Exception('Could not launch $mapUrl');
     }
   }
 }
