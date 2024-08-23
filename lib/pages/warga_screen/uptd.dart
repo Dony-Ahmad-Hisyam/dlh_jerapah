@@ -20,91 +20,41 @@ class _UptdState extends State<Uptd> {
   }
 
   Future<List<Map<String, dynamic>>> fetchKecamatanData() async {
-    final response = await http.get(Uri.parse(baseUrl));
+    try {
+      final response = await http.get(Uri.parse(baseUrl));
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      final List<Map<String, dynamic>> kecamatanList = [];
-
-      for (var item in data['data']) {
-        kecamatanList.add({
-          'id': item['id'],
-          'nama_kecamatan': item['nama_kecamatan'],
-          'upt': item['upt']['nama_upt'],
-        });
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return List<Map<String, dynamic>>.from(data['data'].map((item) => {
+              'id': item['id'],
+              'nama_kecamatan': item['nama_kecamatan'],
+              'upt': item['upt']['nama_upt'],
+            }));
+      } else {
+        throw Exception('Failed to load kecamatan data');
       }
-      return kecamatanList;
-    } else {
-      throw Exception('Failed to load kecamatan data');
+    } catch (e) {
+      throw Exception('Error fetching data: $e');
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'UPTD/TPS',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w700,
-            color: Colors.black,
-          ),
-        ),
+  Widget _buildHeader() {
+    return Container(
+      width: double.infinity,
+      height: 140,
+      decoration: BoxDecoration(
+        color: const Color.fromARGB(255, 57, 87, 254),
+        borderRadius: BorderRadius.circular(10),
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              height: 140,
-              decoration: BoxDecoration(
-                color: const Color.fromARGB(255, 57, 87, 254),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: const Center(
-                child: Text(
-                  'Daftar Wilayah\nUPTD/TPS',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 24,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Expanded(
-              child: FutureBuilder<List<Map<String, dynamic>>>(
-                future: _kecamatanData,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Center(child: Text('No data available'));
-                  }
-
-                  final kecamatanList = snapshot.data!;
-
-                  return ListView.builder(
-                    itemCount: kecamatanList.length,
-                    itemBuilder: (context, index) {
-                      final kecamatan = kecamatanList[index];
-                      return _buildCard(
-                        kecamatan['upt'],
-                        [kecamatan['nama_kecamatan']],
-                      );
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
+      child: const Center(
+        child: Text(
+          'Daftar Wilayah\nUPTD/TPS',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 24,
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
@@ -131,6 +81,72 @@ class _UptdState extends State<Uptd> {
                 item,
                 style: const TextStyle(fontSize: 16),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildListView(List<Map<String, dynamic>> kecamatanList) {
+    Map<String, List<String>> groupedKecamatan = {};
+
+    for (var kecamatan in kecamatanList) {
+      final upt = kecamatan['upt'];
+      final namaKecamatan = kecamatan['nama_kecamatan'];
+
+      if (!groupedKecamatan.containsKey(upt)) {
+        groupedKecamatan[upt] = [];
+      }
+
+      groupedKecamatan[upt]!.add(namaKecamatan);
+    }
+
+    return ListView.builder(
+      itemCount: groupedKecamatan.length,
+      itemBuilder: (context, index) {
+        final upt = groupedKecamatan.keys.elementAt(index);
+        final kecamatanNames = groupedKecamatan[upt]!;
+        return _buildCard(upt, kecamatanNames);
+      },
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text(
+          'UPTD/TPS',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Colors.black,
+          ),
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: Column(
+          children: [
+            _buildHeader(),
+            const SizedBox(height: 10),
+            Expanded(
+              child: FutureBuilder<List<Map<String, dynamic>>>(
+                future: _kecamatanData,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(child: Text('No data available'));
+                  }
+
+                  return _buildListView(snapshot.data!);
+                },
+              ),
+            ),
           ],
         ),
       ),

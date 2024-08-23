@@ -39,18 +39,14 @@ class _EditAlamatScreenState extends State<EditAlamatScreen> {
   }
 
   void _saveChanges() {
-    // Create a new map with the updated data
     final updatedAlamat = {
+      'id': widget.alamat['id'],
       'kecamatan': _kecamatanController.text,
       'kelurahan': _kelurahanController.text,
       'deskripsi': _deskripsiController.text,
-      'kordinat':
-          widget.alamat['kordinat'], // Preserve the original coordinates
     };
 
-    // Handle the save logic, such as updating a list or database
-    Navigator.of(context).pop(
-        updatedAlamat); // Pass the updated data back when popping the screen
+    Navigator.of(context).pop(updatedAlamat);
   }
 
   @override

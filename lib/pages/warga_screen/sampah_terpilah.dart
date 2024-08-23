@@ -80,7 +80,6 @@ class _SampahTerpilahState extends State<SampahTerpilah> {
             setState(() {
               _alamatList = List<Map<String, dynamic>>.from(data['data'] ?? []);
             });
-            print('Data Alamat Diterima: ${data['data']}');
           } else {
             _showErrorDialog('Data Alamat Kosong atau Gagal Diambil');
           }
@@ -188,9 +187,19 @@ class _SampahTerpilahState extends State<SampahTerpilah> {
         _pilihAlamat == null ||
         _image == null ||
         _deskripsi.isEmpty) {
-      _showErrorDialog('Please complete all fields before submitting.');
+      _showErrorDialog('Pastikan semua data terisi!');
       return;
     }
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
+    );
 
     try {
       SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -203,7 +212,7 @@ class _SampahTerpilahState extends State<SampahTerpilah> {
               'https://jera.kerissumenep.com/api/pengangkutan-sampah/store'),
         );
 
-        request.fields['id_upt'] = _pilihKecamatan!;
+        request.fields['id_kecamatan'] = _pilihKecamatan!;
         request.fields['id_alamat'] = _pilihAlamat!;
         request.fields['id_user_warga'] = userId.toString();
         request.fields['deskripsi'] = _deskripsi;
@@ -346,7 +355,6 @@ class _SampahTerpilahState extends State<SampahTerpilah> {
                           onChanged: (String? newValue) {
                             setState(() {
                               _pilihKecamatan = newValue;
-                              // You may need to update alamatList based on selected Kecamatan
                             });
                           },
                           items: _kecamatanList.map<DropdownMenuItem<String>>(
@@ -375,11 +383,15 @@ class _SampahTerpilahState extends State<SampahTerpilah> {
                               return DropdownMenuItem<String>(
                                 value: item['id'].toString(),
                                 child: Text(
-                                  '${item['kelurahan'].toString()}, ${item['kecamatan'].toString()}, ${item['deskripsi'].toString()}',
+                                  '${item['kelurahan']}, ${item['kecamatan']}, ${item['deskripsi']}',
+                                  overflow: TextOverflow
+                                      .ellipsis, // Optional: Wraps text with ellipsis if it is too long
                                 ),
                               );
                             },
                           ).toList(),
+                          isExpanded:
+                              true, // This makes sure the dropdown takes up the available space
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                           ),
@@ -415,7 +427,7 @@ class _SampahTerpilahState extends State<SampahTerpilah> {
                         const SizedBox(height: 10),
                         TextField(
                           maxLines: 3,
-                          decoration: InputDecoration(
+                          decoration: const InputDecoration(
                             labelText: 'Deskripsi',
                             border: OutlineInputBorder(),
                           ),

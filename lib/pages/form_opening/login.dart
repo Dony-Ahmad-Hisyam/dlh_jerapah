@@ -21,7 +21,6 @@ class _LoginState extends State<Login> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
-
   Future<void> _login() async {
     final email = _emailController.text;
     final password = _passwordController.text;
@@ -50,11 +49,13 @@ class _LoginState extends State<Login> {
       final token = responseData['token'];
       final user = responseData['user'];
 
-      // Simpan session menggunakan SharedPreferences
+      // Save session using SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('token', token);
       await prefs.setString('user_name', user['nama']);
-      await prefs.setInt('user_id', user['id']);
+      await prefs.setString('upt_id', user['id_upt']); // Save as String
+      await prefs.setInt(
+          'user_id', user['id']); // This is correct if user_id is an integer
       await prefs.setString('user_email', user['email']);
       await prefs.setString('user_phone', user['no_hp']);
       await prefs.setString('user_role', user['role']);

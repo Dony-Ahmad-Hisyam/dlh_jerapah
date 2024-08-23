@@ -1,48 +1,75 @@
 import 'package:animated_splash_screen/animated_splash_screen.dart';
 import 'package:dlh_project/constant/color.dart';
 import 'package:dlh_project/pages/warga_screen/home.dart';
+import 'package:dlh_project/pages/petugas_screen/home.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SplashScreen extends StatelessWidget {
   const SplashScreen({super.key});
 
+  Future<Widget> _getNextScreen() async {
+    final prefs = await SharedPreferences.getInstance();
+    final role = prefs.getString('user_role');
+
+    // Determine the next screen based on the user's role
+    if (role == 'petugas') {
+      return const HomePetugasPage();
+    } else if (role == 'warga') {
+      return const HomePage();
+    } else {
+      return const HomePage();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return AnimatedSplashScreen(
-      splash: Stack(
-        children: [
-          // Background color
-          Container(
-            color: BlurStyle,
-          ),
-          // Top logo
-          Positioned(
-            top: 226,
-            left: 0,
-            right: 0,
-            child: Image.asset(
-              "assets/icons/logo.png",
-              height: 113,
+    return FutureBuilder<Widget>(
+      future: _getNextScreen(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        } else {
+          return AnimatedSplashScreen(
+            splash: Stack(
+              children: [
+                // Background color
+                Container(
+                  color: BlurStyle,
+                ),
+                // Top logo
+                Positioned(
+                  top: 226,
+                  left: 0,
+                  right: 0,
+                  child: Image.asset(
+                    "assets/icons/icon.png",
+                    height: 113,
+                  ),
+                ),
+                // Center text
+                const Center(
+                  child: Text(
+                    'JERAPAH',
+                    style: TextStyle(
+                      fontSize: 56,
+                      color: white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
             ),
-          ),
-          // Center text
-          const Center(
-            child: Text(
-              'JERAPAH',
-              style: TextStyle(
-                fontSize: 56,
-                color: white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-      nextScreen: const HomePage(),
-      splashIconSize: double.infinity,
-      backgroundColor: Colors.transparent,
-      splashTransition: SplashTransition.fadeTransition,
-      duration: 3000,
+            nextScreen: snapshot.data!,
+            splashIconSize: double.infinity,
+            backgroundColor: Colors.transparent,
+            splashTransition: SplashTransition.fadeTransition,
+            duration: 3000,
+          );
+        }
+      },
     );
   }
 }

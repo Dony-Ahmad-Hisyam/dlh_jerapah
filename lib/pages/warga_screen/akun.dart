@@ -239,8 +239,7 @@ class _AkunState extends State<Akun> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment
-                .spaceBetween, // Menjaga agar icon dan tulisan sejajar
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
                 'Alamat:',
@@ -250,7 +249,6 @@ class _AkunState extends State<Akun> {
                 padding: const EdgeInsets.only(right: 20),
                 child: GestureDetector(
                   onTap: () {
-                    // Navigate to AddAlamatScreen
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => const TambahAlamat(),
@@ -286,8 +284,7 @@ class _AkunState extends State<Akun> {
                             icon: const Icon(Icons.delete),
                             color: Colors.red,
                             onPressed: () {
-                              // Add your delete action here
-                              // _deleteAlamat(alamat);
+                              _confirmDeleteAlamat(context, alamat['id']);
                             },
                           ),
                           IconButton(
@@ -310,6 +307,50 @@ class _AkunState extends State<Akun> {
     );
   }
 
+  void _confirmDeleteAlamat(BuildContext context, int alamatId) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Konfirmasi'),
+          content: const Text('Apakah Anda yakin ingin menghapus alamat ini?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Batal'),
+            ),
+            TextButton(
+              onPressed: () {
+                _deleteAlamat(alamatId);
+                Navigator.of(context).pop();
+              },
+              child: const Text('Hapus'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _deleteAlamat(int alamatId) async {
+    final url = "https://jera.kerissumenep.com/api/alamat/delete/$alamatId";
+    final response = await http.delete(Uri.parse(url));
+
+    if (response.statusCode == 200) {
+      // Successfully deleted the address, now refresh the address list
+      _fetchAlamatData();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Alamat berhasil dihapus')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal menghapus alamat')),
+      );
+    }
+  }
+
   void _editAlamat(BuildContext context, Map<String, dynamic> alamat) {
     Navigator.of(context)
         .push(
@@ -319,17 +360,30 @@ class _AkunState extends State<Akun> {
     )
         .then((updatedAlamat) {
       if (updatedAlamat != null) {
-        // Handle the updated data here
-        // For example, update the list with the new data
-        setState(() {
-          final index = _alamatData
-              .indexWhere((a) => a['kordinat'] == updatedAlamat['kordinat']);
-          if (index != -1) {
-            _alamatData[index] = updatedAlamat;
-          }
-        });
+        _updateAlamat(updatedAlamat);
       }
     });
+  }
+
+  Future<void> _updateAlamat(Map<String, dynamic> alamat) async {
+    final url =
+        "https://jera.kerissumenep.com/api/alamat/update/${alamat['id']}";
+    final response = await http.post(
+      Uri.parse(url),
+      headers: {"Content-Type": "application/json"},
+      body: json.encode(alamat),
+    );
+
+    if (response.statusCode == 200) {
+      _fetchAlamatData();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Alamat berhasil diperbarui')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Gagal memperbarui alamat')),
+      );
+    }
   }
 
   Widget _buildPasswordResetField() {

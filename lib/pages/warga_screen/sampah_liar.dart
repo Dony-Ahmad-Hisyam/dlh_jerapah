@@ -137,7 +137,15 @@ class _SampahLiarState extends State<SampahLiar> {
       setState(() {
         _isLoading = true;
       });
-
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        },
+      );
       try {
         var request = http.MultipartRequest(
           'POST',

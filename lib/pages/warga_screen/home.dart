@@ -1,10 +1,11 @@
 import 'package:dlh_project/constant/color.dart';
+import 'package:dlh_project/pages/petugas_screen/historyPetugas.dart';
+import 'package:dlh_project/pages/warga_screen/history.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'home_konten.dart';
 import 'berita.dart';
 import 'akun.dart';
-import 'history.dart';
 import 'uptd.dart';
 
 class HomePage extends StatefulWidget {
@@ -18,6 +19,7 @@ class _HomePageState extends State<HomePage> {
   int _selectedIndex = 0;
   String? userName;
   int? userId;
+  String? userRole;
   bool _isLoggedIn = false;
 
   @override
@@ -31,6 +33,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       userName = prefs.getString('user_name') ?? 'Guest';
       userId = prefs.getInt('user_id') ?? 0;
+      userRole = prefs.getString('user_role') ?? 'warga'; // Default to 'warga'
       _isLoggedIn = userName != 'Guest';
     });
   }
@@ -42,7 +45,8 @@ class _HomePageState extends State<HomePage> {
         userName: userName ?? 'Guest',
         userId: userId ?? 0,
       ),
-      if (_isLoggedIn) const History(),
+      if (_isLoggedIn)
+        userRole == 'petugas' ? const HistoryPetugas() : const History(),
       const Berita(),
       const Uptd(),
       const Akun(),

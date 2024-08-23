@@ -41,12 +41,14 @@ class _HomeKontenState extends State<HomeKonten> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  "Selamat Datang, ${userName ?? 'Guest'}!",
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Colors.black,
+                Flexible(
+                  child: Text(
+                    "Selamat Datang, ${userName ?? 'Guest'}!",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.black,
+                    ),
                   ),
                 ),
                 Container(

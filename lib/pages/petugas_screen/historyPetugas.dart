@@ -1,4 +1,4 @@
-import 'package:dlh_project/pages/warga_screen/historySampah.dart';
+import 'package:dlh_project/pages/petugas_screen/sampah.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,9 +14,8 @@ Future<List<SampahData>> fetchSampahData() async {
   }
 
   final urls = [
-    'https://jera.kerissumenep.com/api/pengangkutan-sampah/history/$userId/proses',
-    'https://jera.kerissumenep.com/api/pengangkutan-sampah/history/$userId/done',
-    'https://jera.kerissumenep.com/api/pengangkutan-sampah/history/$userId/pending',
+    'https://jera.kerissumenep.com/api/pengangkutan-sampah/history/by-upt/$userId',
+    'https://jera.kerissumenep.com/api/pengangkutan-sampah/history/by-petugas/$userId',
   ];
 
   List<SampahData> allData = [];
@@ -37,14 +36,16 @@ Future<List<SampahData>> fetchSampahData() async {
   return allData;
 }
 
-class History extends StatefulWidget {
-  const History({super.key});
+class HistoryPetugas extends StatefulWidget {
+  const HistoryPetugas({
+    super.key,
+  });
 
   @override
-  _HistoryState createState() => _HistoryState();
+  _HistoryPetugasState createState() => _HistoryPetugasState();
 }
 
-class _HistoryState extends State<History> {
+class _HistoryPetugasState extends State<HistoryPetugas> {
   late Future<List<SampahData>> futureSampahData;
 
   @override
@@ -56,6 +57,7 @@ class _HistoryState extends State<History> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         automaticallyImplyLeading: false,
         title: const Text(
@@ -70,6 +72,7 @@ class _HistoryState extends State<History> {
       body: SingleChildScrollView(
         child: Column(
           children: [
+            const SizedBox(height: 15),
             FutureBuilder<List<SampahData>>(
               future: futureSampahData,
               builder: (context, snapshot) {
@@ -80,7 +83,9 @@ class _HistoryState extends State<History> {
                 } else if (snapshot.hasError) {
                   return Text('Error: ${snapshot.error}');
                 } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('Tidak ada data Riwayat.'));
+                  return const Center(
+                    child: Text('Tidak ada Data Riwayat.'),
+                  );
                 } else {
                   return ListView.builder(
                     shrinkWrap: true,
@@ -100,7 +105,7 @@ class _HistoryState extends State<History> {
                         case 'pending':
                           statusColor = Colors.orange.shade300;
                           break;
-                        case 'failed':
+                        case 'batal':
                           statusColor = Colors.red;
                           break;
                         default:
@@ -109,10 +114,9 @@ class _HistoryState extends State<History> {
 
                       return _buildOuterCard(
                         index: index + 1,
-                        name: data.nama,
+                        name: data.name,
                         phone: data.noHp,
                         status: data.status,
-                        namaUpt: data.namaUpt,
                         location:
                             '${data.alamat.kelurahan}, ${data.alamat.kecamatan}, ${data.alamat.deskripsi}',
                         description: data.deskripsi,
@@ -132,11 +136,10 @@ class _HistoryState extends State<History> {
   }
 
   Widget _buildOuterCard({
-    required int index,
+    required int index, // Adding the index parameter
     required String name,
     required String phone,
     required String status,
-    required String namaUpt,
     required String location,
     required String description,
     required String mapUrl,
@@ -161,7 +164,6 @@ class _HistoryState extends State<History> {
                 name: name,
                 phone: phone,
                 status: status,
-                namaUpt: namaUpt,
                 location: location,
                 description: description,
                 mapUrl: mapUrl,
@@ -179,7 +181,6 @@ class _HistoryState extends State<History> {
     required String name,
     required String phone,
     required String status,
-    required String namaUpt,
     required String location,
     required String description,
     required String mapUrl,
@@ -197,7 +198,7 @@ class _HistoryState extends State<History> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Nama      : $name',
+              'Nama   : $name',
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.black,
@@ -205,7 +206,7 @@ class _HistoryState extends State<History> {
             ),
             const SizedBox(height: 8),
             Text(
-              'No. Hp    : $phone',
+              'No. Hp  : $phone',
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.black,
@@ -215,7 +216,7 @@ class _HistoryState extends State<History> {
             Row(
               children: [
                 const Text(
-                  'Status     : ',
+                  'Status  : ',
                   style: TextStyle(
                     fontSize: 16,
                     color: Colors.black,
@@ -241,7 +242,7 @@ class _HistoryState extends State<History> {
             ),
             const SizedBox(height: 8),
             Text(
-              'UPT         : $namaUpt',
+              'Alamat  : $location',
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.black,
@@ -249,15 +250,7 @@ class _HistoryState extends State<History> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Alamat    : $location',
-              style: const TextStyle(
-                fontSize: 16,
-                color: Colors.black,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Deskripsi : $description',
+              'Deskripsi: $description',
               style: const TextStyle(
                 fontSize: 16,
                 color: Colors.black,
