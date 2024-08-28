@@ -1,6 +1,6 @@
 # DLH Project
 
-**DLH Project** adalah aplikasi Flutter untuk pengelolaan pengangkutan sampah di Kabupaten Cilegon, dengan fitur-fitur seperti pengelolaan data sampah, pelaporan, dan integrasi dengan API serta Google Maps.
+**DLH Project** adalah aplikasi Flutter untuk pengelolaan pengangkutan sampah di Kota Cilegon, dengan fitur-fitur seperti pengelolaan data sampah, pelaporan, dan integrasi dengan API serta Google Maps.
 
 ## Fitur Utama
 
@@ -26,8 +26,21 @@
   - Tampilan dan akses berbeda berdasarkan peran pengguna (petugas atau warga).
 
 
-- **Teknologi yang Digunakan**
+## Teknologi yang Digunakan
  - Flutter: Framework utama untuk aplikasi ini.
  - Dart: Bahasa pemrograman yang digunakan oleh Flutter.
  - Google Maps: Untuk menampilkan dan mengelola lokasi pengguna.
  - REST API: Untuk komunikasi data antara aplikasi dan server.
+
+## Wilayah penggunaan Aplikasi ini
+- ## 8 Kecamatan
+ - Cibeber, Cilegon, Citangkil, Ciwandan, Gerogol, Jombang, Pulomerak dan Purwakarta.
+- ## 43 Kelurahan
+  - Bagendung, Bendungan, Ciwaduk, Ciwedus dan Ketileng
+  - Deringo, Kebonsari, Lebakdenok, Samangraya, Tamanbaru dan Warnasari
+  - Banjar Negara, Gunungsugih, Kepuh, Kubangsari, Randakari dan Tegalratu
+  - Gerem, Gerogol, Kotasari dan Rawa Arum
+  - Gedong Dalem, Jombang Wetan, Masigit, Panggung Rawi dan Sukmajaya
+  - Lebak Gede, Mekarsari, Suralaya dan Tamansari
+  - Kebondalem, Kotabumi, Pabean, Purwakarta, Ramanuju dan Tegal Bunder
+
