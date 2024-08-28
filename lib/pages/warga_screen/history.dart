@@ -17,6 +17,7 @@ Future<List<SampahData>> fetchSampahData() async {
     'https://jera.kerissumenep.com/api/pengangkutan-sampah/history/$userId/proses',
     'https://jera.kerissumenep.com/api/pengangkutan-sampah/history/$userId/done',
     'https://jera.kerissumenep.com/api/pengangkutan-sampah/history/$userId/pending',
+    'https://jera.kerissumenep.com/api/pengangkutan-sampah/history/$userId/failed',
   ];
 
   List<SampahData> allData = [];
@@ -229,7 +230,7 @@ class _HistoryState extends State<History> {
                     borderRadius: BorderRadius.circular(5),
                   ),
                   child: Text(
-                    status,
+                    status == 'failed' ? 'Dibatalkan' : status,
                     style: const TextStyle(
                       fontSize: 16,
                       color: Colors.black,

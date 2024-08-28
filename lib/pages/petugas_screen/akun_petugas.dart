@@ -72,8 +72,7 @@ class _AkunPetugasState extends State<AkunPetugas> {
             children: [
               InfoField(label: 'Nama', value: userName),
               _buildEmailField(), // Custom email field with edit button
-              InfoField(label: 'No. HP', value: userPhone),
-
+              InfoField(label: 'No. HP ', value: userPhone),
               _buildPasswordResetField(),
             ],
           ),
@@ -240,40 +239,114 @@ class _AkunPetugasState extends State<AkunPetugas> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) {
-            return AlertDialog(
-              title: const Text('Edit Semua Data'),
-              content: SingleChildScrollView(
-                child: Column(
-                  children: [
-                    TextField(
-                      controller: usernameController,
-                      decoration: const InputDecoration(labelText: 'Nama'),
-                    ),
-                    TextField(
-                      controller: phoneController,
-                      decoration: const InputDecoration(labelText: 'No. HP'),
-                    ),
-                  ],
+        return AlertDialog(
+          title: const Text('Edit Semua Data'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: usernameController,
+                decoration: const InputDecoration(
+                  labelText: 'Nama',
+                  border: OutlineInputBorder(),
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Cancel'),
+              const SizedBox(
+                height: 10,
+              ),
+              TextField(
+                controller: phoneController,
+                decoration: const InputDecoration(
+                  labelText: 'No. HP ( Awali 62 )',
+                  border: OutlineInputBorder(),
                 ),
-                TextButton(
-                  onPressed: () {
-                    _updateUserData(
-                        usernameController.text, phoneController.text);
-                    Navigator.of(context).pop();
-                  },
-                  child: const Text('Save'),
-                ),
-              ],
-            );
-          },
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Batal'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final userNameInput = usernameController.text;
+                final userPhoneInput = phoneController.text;
+
+                // Check if the username has at least 8 characters
+                if (userNameInput.length < 8) {
+                  // Show a snackbar with an error message
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Nama harus memiliki minimal 8 karakter!'),
+                    ),
+                  );
+                  return; // Do not proceed with the API request
+                }
+
+                SharedPreferences prefs = await SharedPreferences.getInstance();
+                final idUser = prefs.getInt('user_id') ?? 0;
+
+                // Prepare the API request
+                final String apiUrl =
+                    'https://jera.kerissumenep.com/api/user/update/$idUser?_method=PUT';
+                final String? token = prefs.getString('token');
+
+                final Map<String, String> headers = {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer $token',
+                };
+
+                final Map<String, dynamic> body = {
+                  'nama': userNameInput,
+                  'no_hp': userPhoneInput,
+                };
+
+                try {
+                  // Send the PUT request to update user data
+                  final response = await http.put(
+                    Uri.parse(apiUrl),
+                    headers: headers,
+                    body: jsonEncode(body),
+                  );
+
+                  if (response.statusCode == 200) {
+                    // Handle success
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Data berhasil diperbarui!')),
+                    );
+
+                    // Update SharedPreferences with the new data
+                    await prefs.setString('user_name', userNameInput);
+                    await prefs.setString('user_phone', userPhoneInput);
+                  } else {
+                    // Log the full response for debugging
+                    print('Response body: ${response.body}');
+
+                    // Handle error with a fallback message
+                    final errorMessage = jsonDecode(response.body)['message'] ??
+                        'Error: ${response.statusCode} - ${response.reasonPhrase}';
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content:
+                              Text('Gagal memperbarui data: $errorMessage')),
+                    );
+                  }
+                } catch (e) {
+                  // Handle exceptions
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e')),
+                  );
+                }
+
+                Navigator.of(context).pop(); // Close the dialog
+              },
+              child: const Text('Simpan'),
+            ),
+          ],
         );
       },
     );

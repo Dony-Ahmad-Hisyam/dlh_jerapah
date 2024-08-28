@@ -456,11 +456,20 @@ class _AkunState extends State<Akun> {
             children: [
               TextField(
                 controller: usernameController,
-                decoration: const InputDecoration(labelText: 'Nama'),
+                decoration: const InputDecoration(
+                  labelText: 'Nama',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(
+                height: 10,
               ),
               TextField(
                 controller: phoneController,
-                decoration: const InputDecoration(labelText: 'No. HP'),
+                decoration: const InputDecoration(
+                  labelText: 'No. HP ( Awali 62 )',
+                  border: OutlineInputBorder(),
+                ),
               ),
             ],
           ),
@@ -473,17 +482,77 @@ class _AkunState extends State<Akun> {
             ),
             TextButton(
               onPressed: () async {
+                final userNameInput = usernameController.text;
+                final userPhoneInput = phoneController.text;
+
+                // Check if the username has at least 8 characters
+                if (userNameInput.length < 8) {
+                  // Show a snackbar with an error message
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Nama harus memiliki minimal 8 karakter!'),
+                    ),
+                  );
+                  return; // Do not proceed with the API request
+                }
+
                 SharedPreferences prefs = await SharedPreferences.getInstance();
+                final idUser = prefs.getInt('user_id') ?? 0;
 
-                setState(() {
-                  userName = usernameController.text;
-                  userPhone = phoneController.text;
-                });
+                // Prepare the API request
+                final String apiUrl =
+                    'https://jera.kerissumenep.com/api/user/update/$idUser?_method=PUT';
+                final String? token = prefs.getString('token');
 
-                await prefs.setString('user_name', userName);
-                await prefs.setString('user_phone', userPhone);
+                final Map<String, String> headers = {
+                  'Content-Type': 'application/json',
+                  'Authorization': 'Bearer $token',
+                };
 
-                Navigator.of(context).pop();
+                final Map<String, dynamic> body = {
+                  'nama': userNameInput,
+                  'no_hp': userPhoneInput,
+                };
+
+                try {
+                  // Send the PUT request to update user data
+                  final response = await http.put(
+                    Uri.parse(apiUrl),
+                    headers: headers,
+                    body: jsonEncode(body),
+                  );
+
+                  if (response.statusCode == 200) {
+                    // Handle success
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Data berhasil diperbarui!')),
+                    );
+
+                    // Update SharedPreferences with the new data
+                    await prefs.setString('user_name', userNameInput);
+                    await prefs.setString('user_phone', userPhoneInput);
+                  } else {
+                    // Log the full response for debugging
+                    print('Response body: ${response.body}');
+
+                    // Handle error with a fallback message
+                    final errorMessage = jsonDecode(response.body)['message'] ??
+                        'Error: ${response.statusCode} - ${response.reasonPhrase}';
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content:
+                              Text('Gagal memperbarui data: $errorMessage')),
+                    );
+                  }
+                } catch (e) {
+                  // Handle exceptions
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error: $e')),
+                  );
+                }
+
+                Navigator.of(context).pop(); // Close the dialog
               },
               child: const Text('Simpan'),
             ),

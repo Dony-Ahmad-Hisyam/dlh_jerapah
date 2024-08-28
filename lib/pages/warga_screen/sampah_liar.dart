@@ -17,14 +17,18 @@ class SampahLiar extends StatefulWidget {
 class _SampahLiarState extends State<SampahLiar> {
   final ImagePicker _picker = ImagePicker();
   XFile? _image;
-  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneNumberController =
+      TextEditingController(text: '62');
+  final TextEditingController _deskripsiController = TextEditingController();
   final TextEditingController _locationController = TextEditingController();
+
   String? _latitude;
   String? _longitude;
   bool _locationFetched = false;
   bool _photoSelected = false;
   bool _isLoading = false;
-  bool _isLocationLoading = false; // Track location fetching
+  bool _isLocationLoading = false;
 
   List<Map<String, dynamic>> _kecamatanList = [];
   String? _selectedKecamatanId;
@@ -73,7 +77,7 @@ class _SampahLiarState extends State<SampahLiar> {
   }
 
   Future<void> _fetchKecamatanData() async {
-    final String url = "https://jera.kerissumenep.com/api/kecamatan";
+    const String url = "https://jera.kerissumenep.com/api/kecamatan";
     try {
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
@@ -126,12 +130,12 @@ class _SampahLiarState extends State<SampahLiar> {
         _longitude = position.longitude.toString();
         _locationController.text = 'Sudah mendapatkan lokasi Anda';
         _locationFetched = true;
-        _isLocationLoading = false; // Hide loading indicator
+        _isLocationLoading = false;
       });
     } catch (e) {
       _showErrorDialog('Error getting location: $e');
       setState(() {
-        _isLocationLoading = false; // Hide loading indicator
+        _isLocationLoading = false;
       });
     }
   }
@@ -159,7 +163,9 @@ class _SampahLiarState extends State<SampahLiar> {
   Future<void> _submitForm() async {
     if (_locationFetched &&
         _photoSelected &&
-        _phoneController.text.isNotEmpty &&
+        _emailController.text.isNotEmpty &&
+        _phoneNumberController.text.isNotEmpty &&
+        _deskripsiController.text.isNotEmpty &&
         _selectedKecamatanId != null) {
       setState(() {
         _isLoading = true;
@@ -180,7 +186,9 @@ class _SampahLiarState extends State<SampahLiar> {
               'https://jera.kerissumenep.com/api/pengangkutan-sampah-liar/store'),
         );
         request.fields['id_kecamatan'] = _selectedKecamatanId!;
-        request.fields['no_telp'] = _phoneController.text;
+        request.fields['email'] = _emailController.text;
+        request.fields['no_hp'] = _phoneNumberController.text;
+        request.fields['deskripsi'] = _deskripsiController.text;
         request.fields['kordinat'] =
             'https://www.google.com/maps/search/?api=1&query=$_latitude,$_longitude'; // Ensure correct format
         if (_image != null) {
@@ -231,7 +239,9 @@ class _SampahLiarState extends State<SampahLiar> {
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _emailController.dispose();
+    _phoneNumberController.dispose();
+    _deskripsiController.dispose();
     _locationController.dispose();
     super.dispose();
   }
@@ -278,7 +288,7 @@ class _SampahLiarState extends State<SampahLiar> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Image.asset(
-                          'assets/images/sampahliar.png',
+                          'assets/images/trash.png',
                           height: 100,
                         ),
                         const SizedBox(width: 30),
@@ -287,22 +297,22 @@ class _SampahLiarState extends State<SampahLiar> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                "Sampah liar adalah sampah yang dibuang sembarangan di tempat yang tidak semestinya tanpa pengelolaan yang benar, menyebabkan pencemaran dan membahayakan kesehatan.",
+                                "Sampah liar adalah sampah yang dibuang sembarangan, seperti di jalanan, area umum, dan tempat-tempat lainnya yang tidak diizinkan.",
                                 style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500),
-                              )
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
                             ],
                           ),
                         ),
                       ],
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: 20),
             Expanded(
               child: ListView(
                 children: [
@@ -314,14 +324,17 @@ class _SampahLiarState extends State<SampahLiar> {
                     ),
                     padding: const EdgeInsets.all(10.0),
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
-                          'Data Laporan',
-                          style: TextStyle(
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            'Data Laporan',
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black),
+                              color: Colors.black,
+                            ),
+                          ),
                         ),
                         const SizedBox(height: 10),
                         DropdownButtonFormField<String>(
@@ -336,7 +349,7 @@ class _SampahLiarState extends State<SampahLiar> {
                             (Map<String, dynamic> item) {
                               return DropdownMenuItem<String>(
                                 value: item['id'].toString(),
-                                child: Text(item['nama_kecamatan']),
+                                child: Text(item['nama_kecamatan'].toString()),
                               );
                             },
                           ).toList(),
@@ -346,11 +359,21 @@ class _SampahLiarState extends State<SampahLiar> {
                         ),
                         const SizedBox(height: 10),
                         TextField(
-                          controller: _phoneController,
+                          controller: _phoneNumberController,
                           decoration: const InputDecoration(
-                            labelText: 'No HP',
+                            labelText: 'No. HP ( Awali 62 )',
                             border: OutlineInputBorder(),
                           ),
+                          keyboardType: TextInputType.phone,
+                        ),
+                        const SizedBox(height: 10),
+                        TextField(
+                          controller: _emailController,
+                          decoration: const InputDecoration(
+                            labelText: 'Email',
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.text,
                         ),
                         const SizedBox(height: 10),
                         TextField(
@@ -362,9 +385,7 @@ class _SampahLiarState extends State<SampahLiar> {
                                 ? const SizedBox(
                                     width: 24,
                                     height: 24,
-                                    child: Center(
-                                      child: CircularProgressIndicator(),
-                                    ),
+                                    child: CircularProgressIndicator(),
                                   )
                                 : IconButton(
                                     icon: _locationFetched
@@ -418,6 +439,14 @@ class _SampahLiarState extends State<SampahLiar> {
                             fit: BoxFit.cover,
                           ),
                         const SizedBox(height: 10),
+                        TextField(
+                          controller: _deskripsiController,
+                          decoration: const InputDecoration(
+                            labelText: 'Deskripsi',
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 3,
+                        ),
                       ],
                     ),
                   ),
@@ -431,7 +460,7 @@ class _SampahLiarState extends State<SampahLiar> {
                 child: ElevatedButton(
                   onPressed: _submitForm,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: const Color.fromARGB(255, 57, 87, 254),
                   ),
                   child: const Text(
                     'Laporkan!',

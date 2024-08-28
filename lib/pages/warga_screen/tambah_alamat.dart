@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert'; // Untuk jsonEncode
+import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geolocator/geolocator.dart'; // Untuk mengambil lokasi
 import 'package:dlh_project/constant/color.dart';
@@ -14,12 +14,65 @@ class TambahAlamat extends StatefulWidget {
 }
 
 class _TambahAlamatState extends State<TambahAlamat> {
-  final TextEditingController _kecamatanController = TextEditingController();
-  final TextEditingController _kelurahanController = TextEditingController();
   final TextEditingController _deskripsiController = TextEditingController();
 
   String? _kordinat;
   bool _isLoading = false;
+  List<Map<String, dynamic>> _kecamatanList = [];
+  final Map<String, List<String>> _kelurahanMap = {
+    'Cibeber': [
+      'Bulakan',
+      'Cibeber',
+      'Cikerai',
+      'Kalitimbang',
+      'Karangasem',
+      'Kedaleman'
+    ],
+    'Cilegon': ['Bagendung', 'Bendungan', 'Ciwaduk', 'Ciwedus', 'Ketileng'],
+    'Citangkil': [
+      'Citangkil',
+      'Deringo',
+      'Kebonsari',
+      'Lebakdenok',
+      'Samangraya',
+      'Tamanbaru',
+      'Warnasari'
+    ],
+    'Ciwandan': [
+      'Banjar Negara',
+      'Gunungsugih',
+      'Kepuh',
+      'Kubangsari',
+      'Randakari',
+      'Tegalratu'
+    ],
+    'Gerogol': ['Gerem', 'Gerogol/Grogol', 'Kotasari', 'Rawa Arum'],
+    'Jombang': [
+      'Gedong Dalem',
+      'Jombang Wetan',
+      'Masigit',
+      'Panggung Rawi',
+      'Sukmajaya'
+    ],
+    'Pulomerak': ['Lebak Gede', 'Mekarsari', 'Suralaya', 'Tamansari'],
+    'Purwakarta': [
+      'Kebondalem',
+      'Kotabumi',
+      'Pabean',
+      'Purwakarta',
+      'Ramanuju',
+      'Tegal Bunder'
+    ],
+  };
+
+  String? _selectedKecamatanName;
+  String? _selectedKelurahan;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchKecamatanData();
+  }
 
   Future<void> _getCurrentLocation() async {
     setState(() {
@@ -44,6 +97,23 @@ class _TambahAlamatState extends State<TambahAlamat> {
     }
   }
 
+  Future<void> _fetchKecamatanData() async {
+    final String url = "https://jera.kerissumenep.com/api/kecamatan";
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _kecamatanList = List<Map<String, dynamic>>.from(data['data']);
+        });
+      } else {
+        throw Exception('Failed to load kecamatan data');
+      }
+    } catch (e) {
+      _showErrorDialog('Error fetching kecamatan data: $e');
+    }
+  }
+
   Future<void> _tambahAlamat() async {
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getInt('user_id');
@@ -56,15 +126,13 @@ class _TambahAlamatState extends State<TambahAlamat> {
       return;
     }
 
-    final kecamatan = _kecamatanController.text;
-    final kelurahan = _kelurahanController.text;
+    final kelurahan = _selectedKelurahan;
     final deskripsi = _deskripsiController.text;
 
-    if (kecamatan.isEmpty ||
-        kelurahan.isEmpty ||
+    if (_selectedKecamatanName == null ||
+        kelurahan == null ||
         _kordinat == null ||
         deskripsi.isEmpty) {
-      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
             content: Text('Semua field harus diisi dan lokasi harus diambil')),
@@ -81,7 +149,7 @@ class _TambahAlamatState extends State<TambahAlamat> {
       },
       body: jsonEncode({
         'id_user': userId,
-        'kecamatan': kecamatan,
+        'kecamatan': _selectedKecamatanName,
         'kelurahan': kelurahan,
         'kordinat': _kordinat,
         'deskripsi': deskripsi,
@@ -91,14 +159,11 @@ class _TambahAlamatState extends State<TambahAlamat> {
     if (response.statusCode == 201) {
       final responseData = jsonDecode(response.body);
       if (responseData['success']) {
-        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text(responseData['message'])),
         );
-        // ignore: use_build_context_synchronously
         Navigator.pop(context); // Kembali ke halaman sebelumnya
       } else {
-        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content:
@@ -106,7 +171,6 @@ class _TambahAlamatState extends State<TambahAlamat> {
         );
       }
     } else {
-      // ignore: use_build_context_synchronously
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Gagal menambah alamat. Coba lagi.')),
       );
@@ -118,12 +182,31 @@ class _TambahAlamatState extends State<TambahAlamat> {
       if (await canLaunch(_kordinat!)) {
         await launch(_kordinat!);
       } else {
-        // ignore: use_build_context_synchronously
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Tidak dapat membuka peta.')),
         );
       }
     }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -144,18 +227,49 @@ class _TambahAlamatState extends State<TambahAlamat> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const SizedBox(height: 40),
-              TextField(
-                controller: _kecamatanController,
+              DropdownButtonFormField<String>(
+                value: _selectedKecamatanName,
+                hint: const Text('Pilih Kecamatan'),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedKecamatanName = newValue;
+                    _selectedKelurahan =
+                        null; // Reset kelurahan saat kecamatan berubah
+                  });
+                },
+                items: _kecamatanList.map<DropdownMenuItem<String>>(
+                  (Map<String, dynamic> item) {
+                    return DropdownMenuItem<String>(
+                      value: item['nama_kecamatan'],
+                      child: Text(item['nama_kecamatan']),
+                    );
+                  },
+                ).toList(),
                 decoration: const InputDecoration(
-                  labelText: 'Kecamatan',
                   border: OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 16.0),
-              TextField(
-                controller: _kelurahanController,
+              DropdownButtonFormField<String>(
+                value: _selectedKelurahan,
+                hint: const Text('Pilih Kelurahan'),
+                onChanged: _selectedKecamatanName != null
+                    ? (String? newValue) {
+                        setState(() {
+                          _selectedKelurahan = newValue;
+                        });
+                      }
+                    : null,
+                items: _selectedKecamatanName != null
+                    ? _kelurahanMap[_selectedKecamatanName]!
+                        .map<DropdownMenuItem<String>>((String value) {
+                        return DropdownMenuItem<String>(
+                          value: value,
+                          child: Text(value),
+                        );
+                      }).toList()
+                    : [],
                 decoration: const InputDecoration(
-                  labelText: 'Kelurahan',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -163,7 +277,7 @@ class _TambahAlamatState extends State<TambahAlamat> {
               TextField(
                 controller: _deskripsiController,
                 decoration: const InputDecoration(
-                  labelText: 'Deskripsi ( Rumah, Toko, Kantor )',
+                  labelText: 'Deskripsi ( Rumah, Toko, Kantor, RT/RW )',
                   border: OutlineInputBorder(),
                 ),
               ),
@@ -202,15 +316,10 @@ class _TambahAlamatState extends State<TambahAlamat> {
               const SizedBox(height: 24.0),
               SizedBox(
                 width: double.infinity,
+                height: 50,
                 child: ElevatedButton(
                   onPressed: _tambahAlamat,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: BlurStyle,
-                  ),
-                  child: const Text(
-                    'Simpan Alamat',
-                    style: TextStyle(color: white),
-                  ),
+                  child: const Text('Tambah Alamat'),
                 ),
               ),
             ],

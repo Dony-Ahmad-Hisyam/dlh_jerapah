@@ -20,7 +20,6 @@ class _LupaPasswordState extends State<LupaPassword> {
       Uri.parse('https://jera.kerissumenep.com/api/password/forgot'),
       body: {
         'email': emailController.text,
-        'no_hp': noHpController.text,
       },
     );
 
@@ -74,14 +73,6 @@ class _LupaPasswordState extends State<LupaPassword> {
                 controller: emailController,
                 decoration: const InputDecoration(
                   labelText: 'Email',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16.0),
-              TextField(
-                controller: noHpController,
-                decoration: const InputDecoration(
-                  labelText: 'Nomor HP',
                   border: OutlineInputBorder(),
                 ),
               ),

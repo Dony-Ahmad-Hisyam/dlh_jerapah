@@ -1,10 +1,13 @@
 import 'package:dlh_project/pages/form_opening/login.dart';
+import 'package:dlh_project/pages/warga_screen/detail_berita.dart';
 import 'package:flutter/material.dart';
 import 'package:dlh_project/pages/warga_screen/Berita.dart';
 import 'package:dlh_project/pages/warga_screen/sampah_liar.dart';
 import 'package:dlh_project/pages/warga_screen/sampah_terpilah.dart';
 import 'package:dlh_project/constant/color.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class HomeKonten extends StatefulWidget {
   final int userId;
@@ -15,13 +18,87 @@ class HomeKonten extends StatefulWidget {
   State<HomeKonten> createState() => _HomeKontenState();
 }
 
+Future<List<dynamic>> fetchBerita() async {
+  final response =
+      await http.get(Uri.parse('https://jera.kerissumenep.com/api/berita'));
+  if (response.statusCode == 200) {
+    final data = jsonDecode(response.body);
+    if (data['success']) {
+      return data['data'];
+    } else {
+      throw Exception('Gagal untuk memuat berita');
+    }
+  } else {
+    throw Exception('Gagal koneksi ke API');
+  }
+}
+
 class _HomeKontenState extends State<HomeKonten> {
   String? userName;
+  String? _logoUrl;
+  List<String> _imageUrls = [];
 
   @override
   void initState() {
     super.initState();
     _loadUserName();
+    fetchSettings();
+  }
+
+  Future<List<String>> fetchSettings() async {
+    const String url =
+        "https://jera.kerissumenep.com/api/setting"; // Update with your API endpoint
+
+    try {
+      final response = await http.get(Uri.parse(url));
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        // Retrieve application logos from API response
+        if (data['success'] == true && data['data'] != null) {
+          final List<dynamic> settingsData = data['data'];
+
+          // Filter out items where nama_aplikasi is "Jerapah App"
+          final List<String> logoUrls = settingsData
+              .where((item) =>
+                  item is Map<String, dynamic> &&
+                  item['nama_aplikasi'] != "Jerapah App" &&
+                  item['logo_aplikasi'] != null)
+              .map((item) => item['logo_aplikasi'] as String)
+              .toList();
+
+          return logoUrls; // Return the list of logo URLs
+        } else {
+          return []; // Return an empty list if no valid data found
+        }
+      } else {
+        throw Exception(
+            'Failed to load setting data: Status code ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception('Error fetching setting data: $e');
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _loadUserName() async {
@@ -33,6 +110,9 @@ class _HomeKontenState extends State<HomeKonten> {
 
   @override
   Widget build(BuildContext context) {
+    double screenWidth = MediaQuery.of(context).size.width;
+    double padding = 10.0;
+    double imageWidth = screenWidth - padding;
     return SingleChildScrollView(
       child: Column(
         children: [
@@ -42,12 +122,34 @@ class _HomeKontenState extends State<HomeKonten> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Flexible(
-                  child: Text(
-                    "Selamat Datang, ${userName ?? 'Guest'}!",
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.black,
+                  child: Text.rich(
+                    TextSpan(
+                      children: [
+                        const TextSpan(
+                          text: "Selamat Datang, ",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.black,
+                          ),
+                        ),
+                        TextSpan(
+                          text: userName ?? 'Guest',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black,
+                          ),
+                        ),
+                        const TextSpan(
+                          text: "!",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            color: Colors.black,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -62,17 +164,6 @@ class _HomeKontenState extends State<HomeKonten> {
                         offset: Offset(2, 2),
                       ),
                     ],
-                  ),
-                  padding: const EdgeInsets.all(8.0),
-                  child: Center(
-                    child: Text(
-                      "${widget.userId}",
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
                   ),
                 )
               ],
@@ -129,23 +220,87 @@ class _HomeKontenState extends State<HomeKonten> {
             ),
           ),
           const SizedBox(height: 15),
-          Container(
-            padding: const EdgeInsets.only(left: 10, right: 10),
-            height: 174,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                Image.asset("assets/images/kantor.jpg"),
-                const SizedBox(width: 10),
-                Image.asset("assets/images/pegawai.jpg"),
-                const SizedBox(width: 10),
-                Image.asset("assets/images/rapat.jpg"),
-              ],
-            ),
+          FutureBuilder<List<dynamic>>(
+            future: fetchBerita(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Center(child: Text('No data available'));
+              }
+
+              // Balik urutan daftar untuk mendapatkan yang terbaru di awal
+              final beritaList = snapshot.data!.reversed.take(3).toList();
+
+              return Container(
+                padding: const EdgeInsets.all(5),
+                height: 170,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: beritaList.length,
+                  itemBuilder: (context, index) {
+                    final berita = beritaList[index];
+                    final gambarUrl =
+                        'https://jera.kerissumenep.com/storage/gambar-berita/${berita['gambar_konten'][0]['nama']}';
+
+                    return Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
+                      width: 250,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      DetailBerita(berita: berita),
+                                ),
+                              );
+                            },
+                            child: Image.network(
+                              gambarUrl,
+                              fit: BoxFit.cover,
+                              width: 250,
+                              height: 150,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(
+                                  Icons.broken_image,
+                                  size: 100,
+                                );
+                              },
+                              loadingBuilder:
+                                  (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    value: loadingProgress.expectedTotalBytes !=
+                                            null
+                                        ? loadingProgress
+                                                .cumulativeBytesLoaded /
+                                            (loadingProgress
+                                                    .expectedTotalBytes ??
+                                                1)
+                                        : null,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              );
+            },
           ),
-          const SizedBox(height: 10),
+
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Column(
               children: [
                 Container(
@@ -184,14 +339,11 @@ class _HomeKontenState extends State<HomeKonten> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Padding(
-                                padding: EdgeInsets.only(left: 7),
-                              ),
                               Image.asset(
-                                "assets/images/sampah.png",
+                                "assets/images/waste-bin.png",
                                 height: 70,
                               ),
-                              const SizedBox(width: 1),
+                              const SizedBox(width: 10),
                               const Text(
                                 "Sampah\nTerpilah",
                                 style: TextStyle(
@@ -225,14 +377,11 @@ class _HomeKontenState extends State<HomeKonten> {
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Padding(
-                                padding: EdgeInsets.only(left: 7),
-                              ),
                               Image.asset(
-                                "assets/images/sampahliar.png",
-                                height: 80,
+                                "assets/images/trash.png",
+                                height: 60,
                               ),
-                              const SizedBox(width: 1),
+                              const SizedBox(width: 10),
                               const Text(
                                 "Sampah\nLiar",
                                 style: TextStyle(
@@ -298,85 +447,101 @@ class _HomeKontenState extends State<HomeKonten> {
               ],
             ),
           ),
-          const SizedBox(height: 7),
-          Container(
-            padding: const EdgeInsets.only(left: 10, right: 10),
-            height: 250,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                Column(
-                  children: [
-                    Image.asset(
-                      "assets/images/kantor.jpg",
-                      height: 160,
+          // const SizedBox(height: 7),
+          FutureBuilder<List<dynamic>>(
+            future: fetchBerita(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              } else if (snapshot.hasError) {
+                return Center(child: Text('Error: ${snapshot.error}'));
+              } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Center(child: Text('No data available'));
+              }
+
+              final beritaList = snapshot.data!;
+
+              return Container(
+                padding: const EdgeInsets.all(5),
+                height:
+                    200, // Adjust the height based on your design requirements
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: beritaList.length,
+                  itemBuilder: (context, index) {
+                    final berita = beritaList[index];
+                    final gambarUrl =
+                        'https://jera.kerissumenep.com/storage/gambar-berita/${berita['gambar_konten'][0]['nama']}';
+                    final judul = berita['judul'] ?? 'Judul Tidak Tersedia';
+
+                    return Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 8),
                       width: 250,
-                      fit: BoxFit.cover,
-                    ),
-                    const SizedBox(height: 5),
-                    const SizedBox(
-                      width: 250,
-                      child: Text(
-                        "Dinas Lingkungan Hidup (DLH) Kota Cilegon, bentuk tim khusus penanganan sampah di setiap sungai di Kota Cilegon,",
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      DetailBerita(berita: berita),
+                                ),
+                              );
+                            },
+                            child: Image.network(
+                              gambarUrl,
+                              fit: BoxFit.cover,
+                              width: 250,
+                              height: 150,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const Icon(
+                                  Icons.broken_image,
+                                  size: 100,
+                                );
+                              },
+                              loadingBuilder:
+                                  (context, child, loadingProgress) {
+                                if (loadingProgress == null) return child;
+                                return Center(
+                                  child: CircularProgressIndicator(
+                                    value: loadingProgress.expectedTotalBytes !=
+                                            null
+                                        ? loadingProgress
+                                                .cumulativeBytesLoaded /
+                                            (loadingProgress
+                                                    .expectedTotalBytes ??
+                                                1)
+                                        : null,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Expanded(
+                            child: Text(
+                              judul,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 2,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
-                const SizedBox(width: 10),
-                Column(
-                  children: [
-                    Image.asset(
-                      "assets/images/pegawai.jpg",
-                      height: 160,
-                      width: 250,
-                      fit: BoxFit.cover,
-                    ),
-                    const SizedBox(height: 5),
-                    const SizedBox(
-                      width: 250,
-                      child: Text(
-                        "Dinas Lingkungan Hidup Kota Cilegon. 140 likes. Alamat : Jl. Kubang Laban No. 1 Bendung Karet ( samping perumahan Pondok Cilegon Indah )",
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(width: 10),
-                Column(
-                  children: [
-                    Image.asset(
-                      "assets/images/rapat.jpg",
-                      height: 160,
-                      width: 250,
-                      fit: BoxFit.cover,
-                    ),
-                    const SizedBox(height: 5),
-                    const SizedBox(
-                      width: 250,
-                      child: Text(
-                        "Hadir dalam kegiatan pengembangan pengolahan sampah di daerah terpencil dan pesisir",
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+              );
+            },
           ),
-          const SizedBox(height: 50),
+
+          const SizedBox(height: 20),
         ],
       ),
     );

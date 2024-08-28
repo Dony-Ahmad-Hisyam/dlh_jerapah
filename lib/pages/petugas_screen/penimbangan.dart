@@ -25,51 +25,71 @@ class _PenimbanganState extends State<Penimbangan> {
     final jumlahLainnya = double.tryParse(_lainnyaController.text) ?? 0;
     final jumlahMinyak = double.tryParse(_minyakController.text) ?? 0;
 
-    final penimbanganResponse = await http.post(
-      Uri.parse(
-          'https://jera.kerissumenep.com/api/pengangkutan-sampah/penimbangan-sampah/${widget.idSampah}'),
-      headers: {
-        'Content-Type': 'application/json',
+    // Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
       },
-      body: jsonEncode({
-        'jumlah_kertas': jumlahKertas,
-        'jumlah_plastik': jumlahPlastik,
-        'jumlah_logam': jumlahLogam,
-        'jumlah_sampah_lain': jumlahLainnya,
-        'jumlah_minyak_jalantah': jumlahMinyak,
-      }),
     );
 
-    if (penimbanganResponse.statusCode == 200) {
-      // If penimbangan data is saved successfully, update the status to 'done'
-      final statusUpdateResponse = await http.post(
+    try {
+      // Submit penimbangan data
+      final penimbanganResponse = await http.post(
         Uri.parse(
-            'https://jera.kerissumenep.com/api/pengangkutan-sampah/done/${widget.idSampah}'),
+            'https://jera.kerissumenep.com/api/pengangkutan-sampah/penimbangan-sampah/${widget.idSampah}'),
         headers: {
           'Content-Type': 'application/json',
         },
+        body: jsonEncode({
+          'jumlah_kertas': jumlahKertas,
+          'jumlah_plastik': jumlahPlastik,
+          'jumlah_logam': jumlahLogam,
+          'jumlah_sampah_lain': jumlahLainnya,
+          'jumlah_minyak_jalantah': jumlahMinyak,
+        }),
       );
 
-      if (statusUpdateResponse.statusCode == 200) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text(
-                  'Data penimbangan berhasil disimpan dan status diperbarui menjadi Done')),
+      if (penimbanganResponse.statusCode == 200) {
+        // Update status to 'done'
+        final statusUpdateResponse = await http.post(
+          Uri.parse(
+              'https://jera.kerissumenep.com/api/pengangkutan-sampah/done/${widget.idSampah}'),
+          headers: {
+            'Content-Type': 'application/json',
+          },
         );
-        Navigator.pop(context, true); // Return success status
+
+        if (statusUpdateResponse.statusCode == 200) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text(
+                    'Data penimbangan berhasil disimpan dan status diperbarui menjadi Done')),
+          );
+          Navigator.pop(context, true); // Return success status
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+                content: Text(
+                    'Gagal memperbarui status menjadi Done: ${statusUpdateResponse.reasonPhrase}')),
+          );
+        }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
               content: Text(
-                  'Gagal memperbarui status menjadi Done: ${statusUpdateResponse.reasonPhrase}')),
+                  'Gagal menyimpan data penimbangan: ${penimbanganResponse.reasonPhrase}')),
         );
       }
-    } else {
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-            content: Text(
-                'Gagal menyimpan data penimbangan: ${penimbanganResponse.reasonPhrase}')),
+        SnackBar(content: Text('Terjadi kesalahan: ${e.toString()}')),
       );
+    } finally {
+      Navigator.pop(context); // Dismiss loading indicator
     }
   }
 

@@ -330,7 +330,7 @@ class _SampahTerpilahState extends State<SampahTerpilah> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Image.asset(
-                          'assets/images/sampah.png',
+                          'assets/images/waste-bin.png',
                           height: 100,
                         ),
                         const SizedBox(width: 30),

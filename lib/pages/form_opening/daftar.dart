@@ -14,7 +14,8 @@ class Daftar extends StatefulWidget {
 class _DaftarState extends State<Daftar> {
   final TextEditingController _namaController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _noHpController = TextEditingController();
+  final TextEditingController _noHpController =
+      TextEditingController(text: '62');
   final TextEditingController _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
@@ -149,8 +150,9 @@ class _DaftarState extends State<Daftar> {
               const SizedBox(height: 16.0),
               TextField(
                 controller: _noHpController,
+                keyboardType: TextInputType.phone,
                 decoration: const InputDecoration(
-                  labelText: 'No HP',
+                  labelText: 'No HP ( Awali 62 )',
                   border: OutlineInputBorder(),
                 ),
               ),

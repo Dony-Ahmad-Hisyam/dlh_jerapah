@@ -16,7 +16,7 @@ class InfoField extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              label,
+              '$label: ',
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,

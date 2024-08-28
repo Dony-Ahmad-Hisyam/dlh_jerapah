@@ -55,3 +55,59 @@ class Alamat {
     );
   }
 }
+
+class SampahLiarData {
+  final int id;
+  final int? idUserPetugas; // Nullable
+  final String idKecamatan; // Ensure this matches the API response
+  final String noHp;
+  final String kordinat;
+  final String email;
+  final String namaUpt;
+  final String fotoSampah;
+  final String deskripsi;
+  final String status;
+  final String? fotoPengangkutan; // Nullable
+  final String createdAt;
+  final String updatedAt;
+  final String? petugas; // Nullable
+
+  SampahLiarData({
+    required this.id,
+    this.idUserPetugas,
+    required this.idKecamatan,
+    required this.namaUpt,
+    required this.noHp,
+    required this.email,
+    required this.kordinat,
+    required this.fotoSampah,
+    required this.deskripsi,
+    required this.status,
+    this.fotoPengangkutan,
+    required this.createdAt,
+    required this.updatedAt,
+    this.petugas,
+  });
+
+  factory SampahLiarData.fromJson(Map<String, dynamic> json) {
+    return SampahLiarData(
+      id: json['id'] ?? 0,
+      idUserPetugas: json['id_user_petugas'] != null
+          ? int.tryParse(json['id_user_petugas'].toString())
+          : null, // Parse if needed
+      idKecamatan: json['id_kecamatan'] ?? '',
+      noHp: json['no_hp'] ?? '',
+      email: json['email'] ?? '',
+      namaUpt: json['petugas'] != null ? json['petugas']['nama'] : '',
+      kordinat: json['kordinat'] ?? '',
+      fotoSampah: json['foto_sampah'] ?? '',
+      deskripsi: json['deskripsi'] ?? '',
+      status: json['status'] ?? '',
+      fotoPengangkutan:
+          json['foto_pengangkutan']?.toString(), // Handle nullable
+      createdAt: json['created_at'] ?? '',
+      updatedAt: json['updated_at'] ?? '',
+      petugas: json['petugas']?.toString(), // Handle nullable
+    );
+  }
+}

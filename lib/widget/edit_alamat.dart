@@ -1,10 +1,10 @@
-import 'package:dlh_project/constant/color.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class EditAlamatScreen extends StatefulWidget {
   final Map<String, dynamic> alamat;
 
-  // Corrected constructor
   EditAlamatScreen({required this.alamat});
 
   @override
@@ -15,6 +15,8 @@ class _EditAlamatScreenState extends State<EditAlamatScreen> {
   late TextEditingController _kecamatanController;
   late TextEditingController _kelurahanController;
   late TextEditingController _deskripsiController;
+  List<Map<String, dynamic>> _kecamatanList = [];
+  String? _selectedKecamatanName;
 
   @override
   void initState() {
@@ -27,6 +29,12 @@ class _EditAlamatScreenState extends State<EditAlamatScreen> {
         TextEditingController(text: widget.alamat['kelurahan']);
     _deskripsiController =
         TextEditingController(text: widget.alamat['deskripsi']);
+
+    // Set the initial selected kecamatan name to the current one
+    _selectedKecamatanName = widget.alamat['kecamatan'];
+
+    // Fetch kecamatan data when the screen is loaded
+    _fetchKecamatanData();
   }
 
   @override
@@ -41,12 +49,57 @@ class _EditAlamatScreenState extends State<EditAlamatScreen> {
   void _saveChanges() {
     final updatedAlamat = {
       'id': widget.alamat['id'],
-      'kecamatan': _kecamatanController.text,
+      'kecamatan': _selectedKecamatanName ?? widget.alamat['kecamatan'],
       'kelurahan': _kelurahanController.text,
       'deskripsi': _deskripsiController.text,
     };
 
     Navigator.of(context).pop(updatedAlamat);
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Error'),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _fetchKecamatanData() async {
+    const String url = "https://jera.kerissumenep.com/api/kecamatan";
+    try {
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        setState(() {
+          _kecamatanList = List<Map<String, dynamic>>.from(data['data']);
+
+          // Periksa apakah kecamatan yang dipilih ada dalam daftar
+          if (_kecamatanList.any(
+              (item) => item['nama_kecamatan'] == _selectedKecamatanName)) {
+            _selectedKecamatanName = widget.alamat['kecamatan'];
+          } else {
+            _selectedKecamatanName = null; // Set ke null jika tidak ditemukan
+          }
+        });
+      } else {
+        throw Exception('Failed to load kecamatan data');
+      }
+    } catch (e) {
+      _showErrorDialog('Error fetching kecamatan data: $e');
+    }
   }
 
   @override
@@ -64,10 +117,23 @@ class _EditAlamatScreenState extends State<EditAlamatScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: <Widget>[
-            TextField(
-              controller: _kecamatanController,
+            DropdownButtonFormField<String>(
+              value: _selectedKecamatanName,
+              hint: const Text('Pilih Kecamatan'),
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedKecamatanName = newValue;
+                });
+              },
+              items: _kecamatanList.map<DropdownMenuItem<String>>(
+                (Map<String, dynamic> item) {
+                  return DropdownMenuItem<String>(
+                    value: item['nama_kecamatan'],
+                    child: Text(item['nama_kecamatan']),
+                  );
+                },
+              ).toList(),
               decoration: const InputDecoration(
-                labelText: 'Kecamatan',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -83,7 +149,7 @@ class _EditAlamatScreenState extends State<EditAlamatScreen> {
             TextField(
               controller: _deskripsiController,
               decoration: const InputDecoration(
-                labelText: 'Deskripsi',
+                labelText: 'Deskripsi (Rumah, Toko, Kantor, RT/RW)',
                 border: OutlineInputBorder(),
               ),
             ),

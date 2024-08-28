@@ -2,6 +2,7 @@ import 'package:dlh_project/constant/color.dart';
 import 'package:dlh_project/pages/petugas_screen/Home_Konten.dart';
 import 'package:dlh_project/pages/petugas_screen/akun_petugas.dart';
 import 'package:dlh_project/pages/petugas_screen/historyPetugas.dart';
+import 'package:dlh_project/pages/warga_screen/Berita.dart';
 import 'package:dlh_project/pages/warga_screen/history.dart';
 import 'package:dlh_project/pages/warga_screen/uptd.dart';
 import 'package:flutter/material.dart';
@@ -34,7 +35,31 @@ class _HomePetugasPageState extends State<HomePetugasPage> {
       userId = prefs.getInt('user_id') ?? 0;
       userRole = prefs.getString('user_role') ?? 'warga'; // Default to 'warga'
       _isLoggedIn = userName != 'Guest';
+
+      // Check if the user is not 'petugas' and redirect or show a warning
+      if (userRole != 'petugas') {
+        _showAccessDeniedDialog();
+      }
     });
+  }
+
+  void _showAccessDeniedDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Akses Ditolak'),
+        content: const Text('Halaman ini hanya dapat diakses oleh Petugas.'),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Close the dialog
+              Navigator.of(context).pop(); // Go back to the previous page
+            },
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
   }
 
   void _onItemTapped(int index) {
@@ -52,6 +77,7 @@ class _HomePetugasPageState extends State<HomePetugasPage> {
       ),
       if (_isLoggedIn)
         userRole == 'petugas' ? const HistoryPetugas() : const History(),
+      const Berita(),
       const Uptd(),
       const AkunPetugas(),
     ];
@@ -69,6 +95,10 @@ class _HomePetugasPageState extends State<HomePetugasPage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.history),
             label: 'Riwayat',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.newspaper),
+            label: 'Berita',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.location_on_rounded),
