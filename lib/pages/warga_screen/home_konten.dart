@@ -183,32 +183,43 @@ class _HomeKontenState extends State<HomeKonten> {
                     padding:
                         const EdgeInsets.only(left: 21, top: 30, bottom: 30),
                     child: Image.asset(
-                      'assets/images/logo.png',
+                      'assets/images/ic_dlh.png',
                       width: 90,
                       height: 80,
                     ),
                   ),
-                  const Expanded(
+                  Expanded(
                     child: Padding(
-                      padding: EdgeInsets.only(left: 1),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: MediaQuery.of(context).size.width * 0.05),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Text(
-                            'Jerapah',
-                            style: TextStyle(
-                              fontSize: 24,
-                              color: white,
-                              fontWeight: FontWeight.w600,
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              'SICEKAS',
+                              style: TextStyle(
+                                fontSize:
+                                    MediaQuery.of(context).size.width * 0.06,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                          SizedBox(height: 5),
-                          Text(
-                            '( Jemput Ragam Sampah )',
-                            style: TextStyle(
-                              fontSize: 16,
-                              color: white,
-                              fontWeight: FontWeight.w500,
+                          SizedBox(
+                              height:
+                                  MediaQuery.of(context).size.height * 0.01),
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              '( Sistem Informasi Cilegon Kelola Sampah )',
+                              style: TextStyle(
+                                fontSize:
+                                    MediaQuery.of(context).size.width * 0.03,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ],

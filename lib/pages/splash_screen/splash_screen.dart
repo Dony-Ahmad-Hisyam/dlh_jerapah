@@ -45,17 +45,17 @@ class SplashScreen extends StatelessWidget {
                   left: 0,
                   right: 0,
                   child: Image.asset(
-                    "assets/icons/icon.png",
+                    "assets/images/ic_dlh.png",
                     height: 113,
                   ),
                 ),
                 // Center text
                 const Center(
                   child: Text(
-                    'JERAPAH',
+                    'SI\'CEKAS',
                     style: TextStyle(
-                      fontSize: 56,
-                      color: white,
+                      fontSize: 30,
+                      color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
