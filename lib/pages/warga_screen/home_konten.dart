@@ -198,7 +198,7 @@ class _HomeKontenState extends State<HomeKonten> {
                           FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Text(
-                              'SICEKAS',
+                              'PROHIL',
                               style: TextStyle(
                                 fontSize:
                                     MediaQuery.of(context).size.width * 0.06,
@@ -213,7 +213,7 @@ class _HomeKontenState extends State<HomeKonten> {
                           FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Text(
-                              '( Sistem Informasi Cilegon Kelola Sampah )',
+                              '( PROGRAM HIJAU LINGKUNGAN KOTA CILEGON )',
                               style: TextStyle(
                                 fontSize:
                                     MediaQuery.of(context).size.width * 0.03,

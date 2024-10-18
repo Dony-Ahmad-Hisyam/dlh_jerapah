@@ -1,4 +1,4 @@
-package com.sicekas.dlh_project
+package com.prohil.dlh_project
 
 import io.flutter.embedding.android.FlutterActivity
 

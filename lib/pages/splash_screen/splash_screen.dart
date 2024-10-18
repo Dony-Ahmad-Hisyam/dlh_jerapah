@@ -52,7 +52,7 @@ class SplashScreen extends StatelessWidget {
                 // Center text
                 const Center(
                   child: Text(
-                    'SI\'CEKAS',
+                    'PROHIL DLH CILEGON',
                     style: TextStyle(
                       fontSize: 30,
                       color: Colors.white,
